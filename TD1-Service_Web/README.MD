@@ -150,8 +150,8 @@ yum -y install php-mysqlnd php-pdo php-gd php-mbstring
 
 8- Configuration avancée <br>
 Vous allez procéder à une configuration avancée (mais pas forcément conventionnelle) vous permettant de toucher du doigt les principaux points clefs d’une configuration : problèmes de permissions et d’accès, configuration de serveurs virtuels par IP, configuration de serveurs virtuels par nom.  
-	● [8A] Installez le service vsftp, et bien sûr, vérifiez qu’il est opérationnel. Qu’avez vous fait comme commande ? `yum -y install vsftpd.x86_64 && service vsftpd status`
-	● [8B] Créez un compte utilisateur nommé ‘web’.	Le répertoire de travail de l’utilisateur ‘web’ contiendra les dossiers hébergeant les différents sites web gérés par l’utilisateur ‘web’ :
+-   [8A] Installez le service vsftp, et bien sûr, vérifiez qu’il est opérationnel. Qu’avez vous fait comme commande ? `yum -y install vsftpd.x86_64 && service vsftpd status`
+-   [8B] Créez un compte utilisateur nommé ‘web’.	Le répertoire de travail de l’utilisateur ‘web’ contiendra les dossiers hébergeant les différents sites web gérés par l’utilisateur ‘web’ :
 		-un dossier www.campagne.sys pour  l’instance httpd virtuel qui répondra aux requêtes sur une IP (serveur virtuel par IP, cf virtualhost)
 		-un dossier www.montagne.sys et www.glacier.sys pour l’instance httpd virtuel qui répondra aux requêtes les deux domaines (Hébergement mutualisé, cf web multi-homing )
 		-un dossier www.sommet.sys pour tester la mise en place d’un serveur répondant aux requêtes https.
@@ -161,7 +161,7 @@ sudo useradd web --create-home --shel /bin/bash;
 mkdir -p /home/web/www.campagne.sys /home/web/www.glacier.sys /home/web/www.montagne.sys /home/web/www.sommet.sys
 chown web:web -R /home/web/
 ```
-	● [8C] Vérifiez que vous pouvez accéder en lecture/écriture a tous les répertoires présents dans le répertoire /home/web en utilisant un client ftp comme FileZilla. Donnez les permissions de /home/web ainsi que celles des dossiers précédemment créés
+-   [8C] Vérifiez que vous pouvez accéder en lecture/écriture a tous les répertoires présents dans le répertoire /home/web en utilisant un client ftp comme FileZilla. Donnez les permissions de /home/web ainsi que celles des dossiers précédemment créés
 ```
 Vérification des droits : 
 stat -c "User:%U Rights:%A Directory:%N" /home/web/
@@ -226,13 +226,16 @@ NETMASK=255.255.255.0
 ![Conf_réseau](img/ip2.png)
 	Donnez le contenu des 3 fichiers de configuration.	
 - [10B] Comment prouver que votre configuration est fonctionnelle ?
+![Conf_réseau](img/conf_check_ex9.png)
 
 11- Configuration du premier serveur virtuel : serveur virtuel par IP
 	Ce premier serveur virtuel par IP nous permettra de joindre le site web hébergé a l’URL http://172.16.xxx.6.
 	Vous êtes invité a lire la page https://httpd.apache.org/docs/2.4/fr/vhosts/examples.html
 -   [11A] Créez le premier serveur web virtuel. La racine (DocumentRoot) de ce serveur web sera bien sûr le répertoire www.campagne.sys. Donnez le nom et le contenu du fichier de configuration.
 ```
-<VirtualHost 192.168.100.6:80>
+/etc/httpd/sites-available/www.campagne.sys.conf :
+
+<VirtualHost 192.168.100.7:80>
   ServerName www.campagne.sys
   ServerAlias campagne.sys
   DocumentRoot /home/web/www.campagne.sys/
