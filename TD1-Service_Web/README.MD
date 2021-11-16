@@ -334,20 +334,20 @@ ln -s /etc/httpd/sites-available/www.glacier.sys.conf /etc/httpd/sites-enabled/
 
 - [12B] Avez vous vu la note concernant la configuration des DNS ? Donnez-en un résumé
 ```
-Il faut ajouter une entrer dans les serveurs DNS pour pouvoir resoudre les nouveaux noms de domaines mais nous pouvons aussi les rentrer dans fichiers /etc/hosts qui ous permettra d'y acceder avec leurs noms de domaine mais ca ne sera valable que pour les machines sur lesquelles nous l'auront fait. 
+Il faut ajouter une entrer dans les serveurs DNS pour pouvoir résoudre les nouveaux noms de domaines mais nous pouvons aussi les rentrer dans fichiers /etc/hosts qui nous permettra d'y accéder avec leurs noms de domaine mais ça ne sera valable que pour les machines sur lesquelles nous l'auront fait. 
 ```
 - [12C] Mettez en place une solution permettant de garantir que le serveur virtuel hébergeant www.montagne.sys est bien le bon a répondre et procédez aux tests. Justifiez votre démarche.
 ```
-En creant un fichier index.html avec un message personalise comme "Bienvenue sur le site montagne de Emile METRAL" je pourrais verifier que c'est bien le bon serveur a repondre.
+En créant un fichier index.html avec un message personalisé comme "Bienvenue sur le site montagne de Emile METRAL" je pourrais verifier que c'est bien le bon serveur a repondre.
 ```
 - [12D] Testez l’URL http://172.16.xxx.5 . Quel serveur virtuel a répondu ? Est-ce le comportement attendu ? Justifiez votre réponse.
 ```
-Le serveur virtuelle par defaut pointant vers les ressources presant dan /var/www/html a repondu. C'est bien normal car je ne l'est pas desactive pour le moment. 
+Le serveur virtuelle par défaut pointant vers les ressources presant dan /var/www/html a répondu. C'est bien normal car je ne l'ai pas désactivé pour le moment. 
 ```
 
 - [12E] Avez vous vu la note intitulée « Le serveur principal disparaît » ? Quelle information essentiel contient-elle ?
 ```
-Il faut creer un serveur virtuel par defaut qui comporterait une directive ServerName avec le nom du serveur principal. Car toute requete qui ne correspond pas a un VirtualHost est traitee avec la configuration du serveur principal.
+Il faut créer un serveur virtuel par defaut qui comporterait une directive ServerName avec le nom du serveur principal. Car toute requête qui ne correspond pas à un VirtualHost est traitée avec la configuration du serveur principal.
 ```
 ## 13- Serveur virtuel, HTTPS et SSL <br>
 ***Vous avez remarqué que les serveurs virtuels ne répondent pas sur le port 443. Vous allez mettre en place un serveur web avec chiffrement fort SSL/TLS. La page https://httpd.apache.org/docs/2.4/fr/sslssl_howto.html devrait vous aider.***
@@ -355,14 +355,14 @@ Il faut creer un serveur virtuel par defaut qui comporterait une directive Serve
 ```
 Il faut le module mod_ssl.
 
-Pour verifier si il est installe : rpm -qa | grep mod_ssl || echo "mod_ssl pas installe"
+Pour vérifier si il est installé : rpm -qa | grep mod_ssl || echo "mod_ssl pas installe"
 Si il ne l'est pas : dnf install mod_ssl
-On peut maintenant verifier qu'il est dans les modules d'Apache avec : ls /etc/httpd/modules/ | grep mod_ssl.so
+On peut maintenant vérifier qu'il est dans les modules d'Apache avec : ls /etc/httpd/modules/ | grep mod_ssl.so
 ```
 - [13B] La commande « openssl req -x509 -nodes -newkey rsa:1024 -keyout serveur.cle -out certificat.pem » permet de générer les fichiers nécessaires pour l’utilisation de l’https.
-  - A quoi sert l’option « -x509 » : `Il permet de generer un certifat auto signe`
-  - A quoi sert le paramètre « rsa:1024 » de l’option « -newkey » ? Ce paramétre est-il pertinent a l’heure actuelle ? ` newkey permet de dire de generer un nouveau certificat et rsa:1024 permet de definir l'algoritme de chiffrement donc le RSA et la taille de la cle. La taille de 1024 bits semble faible car il est recommande aujourd'hui une taille de 2048bit pour l'algorithme RSA.`
-		-Quels sont les fichiers générés ? Que contiennent-ils ? ` Il y a ete genere la cle privee et le certificat auto-signe`
+  - A quoi sert l’option « -x509 » : `Il permet de générer un certifat auto-signé`
+  - A quoi sert le paramètre « rsa:1024 » de l’option « -newkey » ? Ce paramètre est-il pertinent à l’heure actuelle ? ` newkey permet de dire de générer un nouveau certificat et rsa:1024 permet de définir l'algoritme de chiffrement donc le RSA et la taille de la clé. La taille de 1024 bits semble faible car il est recommandé aujourd'hui une taille de 2048bit pour l'algorithme RSA.`
+		-Quels sont les fichiers générés ? Que contiennent-ils ? ` Il y a ete générer la clé privée et le certificat auto-signé`
 - [13C] Mettez en place le serveur virtuel www.sommet.sys Il devra répondre sur les ports 80 et 443, et donnez le contenu du fichier de configuration.
 ```
 changement de la taille de cle en 2048 bits pour que cela marche puis :
@@ -403,11 +403,11 @@ changement de la taille de cle en 2048 bits pour que cela marche puis :
 ```
 - [13D] Quel message avez-vous obtenu lors de vos tests avec votre navigateur ? Pourquoi avez vous obtenu ce message ?
 ```
-Le navigateur nous demande si on est sur de vouloir rentrer sur ce site car il n'est pas securise. Cela vient du certificat auto signe car il n'est pas valide par un organisme de certification reconnu. 
+Le navigateur nous demande si on est sûr de vouloir rentrer sur ce site car il n'est pas sécurisé. Celà vient du certificat auto signé car il n'est pas validé par un organisme de certification reconnu. 
 ```
 - [13E] Connaissez vous le site Let’s Encrypt (https://letsencrypt.org/fr/). Quel est son rôle ? Comment peut-il vous aidez pour le problème précédent ?
 ```
-Let's Encrypt fourni des certificats valide car c'est une autorite de certification. Il nous permettrai de ne plus avoir le message lorsqu'on se rend sur notre site. 
+Let's Encrypt fourni des certificats validé car c'est une autorite de certification. Il nous permettrai de ne plus avoir le message lorsqu'on se rend sur notre site. 
 ```
 
 ## 14-Restriction de l’accès utilisateur <br>
@@ -426,7 +426,7 @@ Let's Encrypt fourni des certificats valide car c'est une autorite de certificat
     - Authentification basic 
 	- Authentification par fournisseur
 `
-- [14B] Qu’est ce qu’un fournisseur d’accès dans ce contexte? ` Un serveur externe dediee a l'authentification avec un protocole comme le ldap`
+- [14B] Qu’est ce qu’un fournisseur d’accès dans ce contexte? ` Un serveur externe dediée à l'authentification avec un protocole comme le ldap`
 - [14C] Pour le site www.campagne.sys, créer un répertoire « secure » et vérifier que vous pouvez bien accéder au contenu de ce répertoire. Quels tests avez-vous effectués ?
 ```
 mkdir /home/web/www.campagne.sys/secure
@@ -475,7 +475,7 @@ En me rendant sur www.campagne.sys/secure/ et en rentrant les login.
 ```
 ## 15-Fichier .htaccess 
 ***Ce fichier permet de redéfinir certains paramètres de configuration du serveur ou certains accès a des répertoires sans avoir toucher les fichiers de configuration du serveur Apache, donc sans avoir a être « root ». La seule contrainte est que le fichier de configuration  (du serveur virtuel) autorise une modification de ces paramètres (directive AllowOverride) pour le répertoire ou l’arborescence contenant le fichier .htaccess***
--	[15A] Qu’est ce qu’une réécriture d’URL ? Quel module est nécessaire pour faire une réécriture d’URL ?
+-	[15A] Qu’est ce qu’une réécriture d’URL ? Quel module est nécessaire pour faire une réécriture d’URL ? 
 -	[15B] Qu’est ce qu’un Framework ? `Une plateforme de developpement qui fournit les foundations pour construire de nouveaux programmes`
 -	[15C] A quoi sert la directive AllowOverride ? `Permet de gerer les possible reecriture de directive dans un dossier par un .htaccess`
 -	[15D] Quels sont les 6 paramètres pris en compte par la directive AllowOverride ? `AuthConfig - FileInfo - Indexes -  Limit - Nonfatal - Options ` 
