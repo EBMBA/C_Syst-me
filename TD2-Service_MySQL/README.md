@@ -38,7 +38,7 @@ L’objectif de ce TD est :
 Sur un système Linux, il existe 2 méthodes pour se connecter au service mariadb, l’une  d’entre elle est l’utilisation du protocole TCP/IP
 -   [6A] Quelle commande vous permet de joindre votre serveur mariadb ?`mysql -u WebUser -h DBSERVER -p`
 -   [6B] Que permet de faire l’option  --protocol ?`Permet définir le protocole que l'on souhaite utiliser entre le client et le serveur.`
--   [6C] Quelle est l’autre méthode permettant de joindre un service mariadb ? Quelle est sa limite ? ` `
+-   [6C] Quelle est l’autre méthode permettant de joindre un service mariadb ? Quelle est sa limite ? `Par un client graphique comme MySQL Workbench `
 -   [6D] Quel est le protocole utilisé par défaut par le client (cf la commande précédente ) pour joindre le service mariadb ? Comment l’avez vous prouvé ?  ` netstat -tlpn | grep mysql ==> tcp`
 # 7-Sécurisation
 Le service mariadb/mysqld possède son propre système de gestion des comptes et des accès.
@@ -47,7 +47,7 @@ Le service mariadb/mysqld possède son propre système de gestion des comptes et
 -   [7C] Que ce passe-t-il si vous  utilisez l’adresse 127.0.0.1.  Comment avez vous prouvé que vous êtes bien connecté en TCP/IP. Quelle commande avez vous utilisée pour le prouver ? `On peut se connecter en local avec le compte root.  `
 Quelle commande avez vous utilisé pour vous connecter ? 
 -   [7D] Même question que précédemment, mais en utilisant localhost. `On peut se connecter en local avec le compte root.  `
--   [7E] Vous avez constaté que le serveur ne demande jamais de mot de passe. Sur quoi repose la sécurité des données ? Quels sont les risques sur un serveur de production hébergeant par exemple un service Apache, Tomcat ou autre et le service mariadb ? ``
+-   [7E] Vous avez constaté que le serveur ne demande jamais de mot de passe. Sur quoi repose la sécurité des données ? Quels sont les risques sur un serveur de production hébergeant par exemple un service Apache, Tomcat ou autre et le service mariadb ? `L'accès est limité en local mais si sur le serveur d'autre service sont installés un hacker pourrait passer par celui-ci pour accéder aux bases de données. `
 -   Le script mysql_secure_installation permet de sécuriser une installation de mariadb.
     -   Fixer un mdp pour le compte root
     -   Supprimer le compte anonyme
