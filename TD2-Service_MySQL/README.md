@@ -21,7 +21,7 @@ L’objectif de ce TD est :
 -   Installez le package mariadb-server `sudo yum install mariadb-server`
 -   [3A] Installez le package mariadb. Que contient ce package ?
 ```bash
-
+Il contient le client mariadb. 
 ```
 -   [3B] Qu’est ce que mariadb par rapport a mysql ? `MariaDB est un fork de mysql créé après le départ d'un développeur de mysql`
 # 4-Prise en main
@@ -254,15 +254,95 @@ La mise en place d’un serveur mariadb maitre avec un esclave est assez simple.
 [mariadb]
 log-bin=mysql-bin
 server-id=1
-log-basename = masterSQLM
+log-basename=masterSQLM
 expire_logs_days=1
 #binlog_expire_logs_seconds=60
 #replicate_do_db = réplication de certaines db
-● Création d’un compte pour la réplication ou attribution des droits sur un compte existant  
+```
+-   Création d’un compte pour la réplication ou attribution des droits sur un compte existant  
 sur le serveur maitre 
-> GRANT REPLICATION SLAVE ON *.* TO root;
-> GRANT ALL PRIVILEGES ON *.* TO 'root'@'IPSLAVE1' IDENTIFIED BY 'PASSWORD' WITH 
-GRANT OPTION;
-> FLUSH PRIVILEGES ;
-> SHOW MASTER STATUS;
+```sql
+CREATE USER 'replicationUser'@'192.168.100.186' IDENTIFIED BY 'password';
+GRANT REPLICATION SLAVE ON *.* TO replicationUser;
+GRANT ALL PRIVILEGES ON *.* TO 'replicationUser'@'192.168.100.186' IDENTIFIED BY 'password' WITH GRANT OPTION;
+FLUSH PRIVILEGES ;
+SHOW MASTER STATUS;
+
+FLUSH TABLES WITH READ LOCK;
+SHOW MASTER STATUS;
+```
+
+```bash
+mysqldump -u root -p --databases worlddb > worlddb.sql
+scp worlddb.sql root@192.168.100.186:/root
+Sur le slave : mysql -u root -p < worlddb.sql
+
+```
+
+```sql 
+UNLOCK TABLES;
+```
+
+-   Configuration du slave
+```
+[mariadb]
+server-id=2
+```
+
+```sql
+CHANGE MASTER TO
+  MASTER_HOST='192.168.100.8',
+  MASTER_USER='replicationUser',
+  MASTER_PASSWORD='password',
+  MASTER_PORT=3306,
+  MASTER_LOG_FILE='masterSQLM-bin.000001',
+  MASTER_LOG_POS=333,
+  MASTER_CONNECT_RETRY=10;
+
+START SLAVE;
+
+SHOW SLAVE STATUS \G
+*************************** 1. row ***************************
+        Slave_IO_State: Waiting for master to send event
+        Master_Host: 192.168.100.8
+        Master_User: replicationUser
+        Master_Port: 3306
+        Connect_Retry: 10
+        Master_Log_File: masterSQLM-bin.000001
+        Read_Master_Log_Pos: 333
+        Relay_Log_File: mariadb-relay-bin.000002
+        Relay_Log_Pos: 560
+        Relay_Master_Log_File: masterSQLM-bin.000001
+        Slave_IO_Running: Yes
+        Slave_SQL_Running: Yes
+
+```
+
+-   On teste la configuration 
+Sur le master :
+```sql
+create database test;
+show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| worlddb            |
++--------------------+
+```
+Sur le slave 
+```sql
+show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| worlddb            |
++--------------------+
 ```
