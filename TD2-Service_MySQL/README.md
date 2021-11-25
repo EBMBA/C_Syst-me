@@ -27,7 +27,7 @@ Il contient le client mariadb.
 # 4-Prise en main
 -   [4A] Quel est le fichier de configuration de configuration de mariadb ?`/etc/my.cnf`
 -   [4B] Quel est son format ?`.cnf`
--   [4C] Quel est une de ses particularités ? ` `
+-   [4C] Quel est une de ses particularités ? `Son contenu est en format clé -> valeur.`
 -   [4D] Quel est le répertoire de travail utilisé par le serveur pour stocker les bases de données?`/var/lib/mysql`
 -   [4E] Cette emplacement vous semble-t-il pertinent ? Justifiez votre réponse.` Ce n'est pas pertinent car le répertoire /var est fait pour stocker les données produites par les programmes du systèmes.` 
 -   [4F] Proposez une configuration plus conforme a celle d’un serveur de production.`Il faudrait plutôt  stocker les bases de données dans le repertoire srv car il est fait pour stocker les données des services proposés par le système`
@@ -221,14 +221,14 @@ mysql -u root -p < dump-worldb.sql;
 ```
 ● Il existe d’autres méthodes pour faire des sauvegardes de DB. Le lien suivant devrait vous éclairer https://mariadb.com/kb/en/library/backup-and-restore-overview/ 
 - [10E] Qu’est ce qu’une sauvegarde logique ? `C'est l'extraction des commandes permettant de restaurer  la structure, les données, les procédures et les fonctions stockées, etc.`
-- [10F] Quels sont les différents type de sauvegardes physiques ? ` `
-- [10G] Quelles autres commandes sont utilisées pour faire une sauvegarde ? 
+- [10F] Quels sont les différents type de sauvegardes physiques ? ` Incrémentales --> sauvegarde la différence de données depuis la dernière sauvegarde. Complètes --> sauvegarde l'entiereté des données.`
+- [10G] Quelles autres commandes sont utilisées pour faire une sauvegarde ? `percona xtrabackup / xtrabackup` 
 
 Les méthodes de sauvegardes précédentes procèdent a chaque fois a une sauvegarde complète des DB, ce qui peut prendre beaucoup de temps et demander beaucoup d’espace de stockage. Le lien suivant propose une autre approche pour les sauvegardes : 
 https://mariadb.com/kb/en/library/incremental-backup-and-restore-with-mariabackup/
-- [10H] Quel type de sauvegarde est proposé ?
-- [10I] Quels avantages présent-il ?
-- [10J] Quels sont les problèmes posés par ce type de sauvegarde ?
+- [10H] Quel type de sauvegarde est proposé ? `La sauvegarde incrémentale est proposée.`
+- [10I] Quels avantages présent-il ? `La sauvegarde incrémentale est donc plus légère que la sauvegarde complète, plus rapide également en traitement.`
+- [10J] Quels sont les problèmes posés par ce type de sauvegarde ? `Cependant, en cas d'une sauvegarde incrémentale erronnée, les prochaines sauvegardes incrémentales ne pourront être effectuées. Il faudra donc refaire une sauvegarde complète après une incrémentale échouée.`
 # 11- Outils graphiques.
 Les outils graphiques apportent un certains confort de travail. Il en existe de très nombreux 
 souvent payant, d’autres gratuits :
@@ -236,12 +236,12 @@ souvent payant, d’autres gratuits :
 * HeidiSQL (uniquement sur Windows)
 * Dbeaver
 Dans la majorité des cas, il est possible de faire une connexion directe sur un serveur mariadb, ou alors de faire une connexion a travers un tunnel SSH
--   [11A] Quel est l’intérêt d’une connexion a travers un tunnel SSH ?
+-   [11A] Quel est l’intérêt d’une connexion a travers un tunnel SSH ? `Les commandes effectuées, les données récupérées via ces commandes également ne peuvent être interceptées car le SSH chiffre les communications.`
  
 # 12- Réplication comme solution de sauvegarde ?
 ***La réplication sur un serveur ou plusieurs serveurs esclaves peut être utilisée comme stratégie complémentaire a la sauvegarde. Regardez le lien suivant : https://mariadb.com/kb/en/library/replication-as-a-backup-solution/***
--   [12A] Quels sont les limites de la réplication ?
--   [12A] Quels sont les usages courant des serveurs de réplications? 
+-   [12A] Quels sont les limites de la réplication ?`La réplication ne peut protéger contre les pertes de données ou une erreur de manipulation.`
+-   [12A] Quels sont les usages courant des serveurs de réplications? `La réplication est notamment utilisée dans les cas de failover ou bien dans un système de load-balancing.`
 (https://mariadb.com/kb/en/mariadb-maxscale-22-maxscale-failover-with-keepalived-and-maxctrl/)
 
 La mise en place d’un serveur mariadb maitre avec un esclave est assez simple.
