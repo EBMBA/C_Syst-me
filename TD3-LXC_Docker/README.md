@@ -58,7 +58,7 @@ lxc-checkconfig
 -   [7A] Il existe 2 façons rapides de créer localement un conteneur : Quelles sont elles ? `Les deux façons sont avec privilège ou sans. Avec la commande lxc-create accompagné de sudo.`
     -   Dans certains cas, il est possible qu’il y ai un message d’erreur provenant de la commande lxc-create : Setting up the GPG keyring ERROR: Unable to fetch GPG key from keyserver
 -   [7B] Dans quelles conditions pouvez vous rencontrer ce message d’erreurs ? `Lorsqu'on souhaite télécharger une image de conteneur protégé par une clé GPG et qu'on n'arrive pas à télécharger la clé pour vérifier l'image.` 
--   [7C] Qu’est ce qu’un serveur de clefs ? Sur quel port écoute-t-il ? `Port 11371` 
+-   [7C] Qu’est ce qu’un serveur de clefs ? Sur quel port écoute-t-il ? ` un serveur de clés est un serveur qui : reçoit des clés de chiffrement de leurs propriétaires ;emmagasine ces clés ; puis les distribue aux utilisateurs ou programmes qui veulent communiquer de façon chiffrée avec les propriétaires des clés. Port 11371` 
 -   [7D] Quelles solutions proposez vous ? `Désactivé la vérification des images. Avec sed -i "/^DOWNLOAD_VALIDATE/s/true/false/" /usr/share/lxc/templates/lxc-download` 
 -   [7E] Quelle est la commande permettant de déployer un conteneur LXC  de type debian ? `lxc-create -n container1 -B lvm --vgname vglxc --fstype=ext4 --fssize=50G -t download -- -d debian -r buster -a amd64` 
 -   [7F] Déployez un conteneur centos, version 7. Quelle commande avez vous utilisée ? A quoi sert l’option `-n` ? `lxc-create -n container3 -t download -- -d centos -r 7 -a amd64 L'option -n est pour nommé le conteneur`
