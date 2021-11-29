@@ -161,15 +161,15 @@ A quoi servent les options :
 docker ps
 Puis regarder son statut qui doit etre up 
 ```
--   [9L] La commande ip addr affiche un périphérique particulier. Lequel ?
+-   [9L] La commande ip addr affiche un périphérique particulier. Lequel ? `Command not Found`
 
 -   [9M] Quelle commande permet d’afficher l’IP du conteneur ? 
 ```Docker
 docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)
 ```
--   [9N] Essayez de joindre le serveur web du conteneur, quelle réponse obtenez vous ?
+-   [9N] Essayez de joindre le serveur web du conteneur, quelle réponse obtenez vous ? `Je tombe sur la page par défaut de Apache It's works`
 -   [9M] Récupérez le fichier info.php qui doit être présent sur le serveur web du conteneur 
-« apachy ». Qu’observez-vous ?
+« apachy ». Qu’observez-vous ? ``
 
 10.  Création d’une image personnalisée avec un Dockerfile
 
@@ -181,5 +181,5 @@ Vous allez installer les packages nécessaires pour avoir un serveur web dynamiq
     -   Installez les packages php php-cli php-gd php-mbstring php-mysqlnd php-pdo php-sodium php-xml via le Dockerfile
 -   [10A] Lancez l’image. Quelle démarche avez-vous utilisée pour vérifier : 
     -   Que l’image est lancée ?  `docker ps ` 
-    -   Que le serveur web fonctionne ? `netmap`
+    -   Que le serveur web fonctionne ? `sudo docker exec -d web_c apt-get install net-tools  puis sudo docker exec  web_c netstat On vérifie que le conteneur écoute le protcole web`
     -   Que le moteur php dans le conteneur répond correctement. `Création d'un fichier info.php dans le serveurs web et accéder à la page web`
