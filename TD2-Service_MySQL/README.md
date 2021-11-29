@@ -21,13 +21,13 @@ L’objectif de ce TD est :
 -   Installez le package mariadb-server `sudo yum install mariadb-server`
 -   [3A] Installez le package mariadb. Que contient ce package ?
 ```bash
-
+Il contient le client mariadb. 
 ```
 -   [3B] Qu’est ce que mariadb par rapport a mysql ? `MariaDB est un fork de mysql créé après le départ d'un développeur de mysql`
 # 4-Prise en main
 -   [4A] Quel est le fichier de configuration de configuration de mariadb ?`/etc/my.cnf`
 -   [4B] Quel est son format ?`.cnf`
--   [4C] Quel est une de ses particularités ? ` `
+-   [4C] Quel est une de ses particularités ? `Son contenu est en format clé -> valeur.`
 -   [4D] Quel est le répertoire de travail utilisé par le serveur pour stocker les bases de données?`/var/lib/mysql`
 -   [4E] Cette emplacement vous semble-t-il pertinent ? Justifiez votre réponse.` Ce n'est pas pertinent car le répertoire /var est fait pour stocker les données produites par les programmes du systèmes.` 
 -   [4F] Proposez une configuration plus conforme a celle d’un serveur de production.`Il faudrait plutôt  stocker les bases de données dans le repertoire srv car il est fait pour stocker les données des services proposés par le système`
@@ -38,7 +38,7 @@ L’objectif de ce TD est :
 Sur un système Linux, il existe 2 méthodes pour se connecter au service mariadb, l’une  d’entre elle est l’utilisation du protocole TCP/IP
 -   [6A] Quelle commande vous permet de joindre votre serveur mariadb ?`mysql -u WebUser -h DBSERVER -p`
 -   [6B] Que permet de faire l’option  --protocol ?`Permet définir le protocole que l'on souhaite utiliser entre le client et le serveur.`
--   [6C] Quelle est l’autre méthode permettant de joindre un service mariadb ? Quelle est sa limite ? ` `
+-   [6C] Quelle est l’autre méthode permettant de joindre un service mariadb ? Quelle est sa limite ? `Par un client graphique comme MySQL Workbench `
 -   [6D] Quel est le protocole utilisé par défaut par le client (cf la commande précédente ) pour joindre le service mariadb ? Comment l’avez vous prouvé ?  ` netstat -tlpn | grep mysql ==> tcp`
 # 7-Sécurisation
 Le service mariadb/mysqld possède son propre système de gestion des comptes et des accès.
@@ -47,7 +47,7 @@ Le service mariadb/mysqld possède son propre système de gestion des comptes et
 -   [7C] Que ce passe-t-il si vous  utilisez l’adresse 127.0.0.1.  Comment avez vous prouvé que vous êtes bien connecté en TCP/IP. Quelle commande avez vous utilisée pour le prouver ? `On peut se connecter en local avec le compte root.  `
 Quelle commande avez vous utilisé pour vous connecter ? 
 -   [7D] Même question que précédemment, mais en utilisant localhost. `On peut se connecter en local avec le compte root.  `
--   [7E] Vous avez constaté que le serveur ne demande jamais de mot de passe. Sur quoi repose la sécurité des données ? Quels sont les risques sur un serveur de production hébergeant par exemple un service Apache, Tomcat ou autre et le service mariadb ? ``
+-   [7E] Vous avez constaté que le serveur ne demande jamais de mot de passe. Sur quoi repose la sécurité des données ? Quels sont les risques sur un serveur de production hébergeant par exemple un service Apache, Tomcat ou autre et le service mariadb ? `L'accès est limité en local mais si sur le serveur d'autre service sont installés un hacker pourrait passer par celui-ci pour accéder aux bases de données. `
 -   Le script mysql_secure_installation permet de sécuriser une installation de mariadb.
     -   Fixer un mdp pour le compte root
     -   Supprimer le compte anonyme
@@ -221,14 +221,14 @@ mysql -u root -p < dump-worldb.sql;
 ```
 ● Il existe d’autres méthodes pour faire des sauvegardes de DB. Le lien suivant devrait vous éclairer https://mariadb.com/kb/en/library/backup-and-restore-overview/ 
 - [10E] Qu’est ce qu’une sauvegarde logique ? `C'est l'extraction des commandes permettant de restaurer  la structure, les données, les procédures et les fonctions stockées, etc.`
-- [10F] Quels sont les différents type de sauvegardes physiques ? ` `
-- [10G] Quelles autres commandes sont utilisées pour faire une sauvegarde ? 
+- [10F] Quels sont les différents type de sauvegardes physiques ? ` Incrémentales --> sauvegarde la différence de données depuis la dernière sauvegarde. Complètes --> sauvegarde l'entiereté des données.`
+- [10G] Quelles autres commandes sont utilisées pour faire une sauvegarde ? `percona xtrabackup / xtrabackup` 
 
 Les méthodes de sauvegardes précédentes procèdent a chaque fois a une sauvegarde complète des DB, ce qui peut prendre beaucoup de temps et demander beaucoup d’espace de stockage. Le lien suivant propose une autre approche pour les sauvegardes : 
 https://mariadb.com/kb/en/library/incremental-backup-and-restore-with-mariabackup/
-- [10H] Quel type de sauvegarde est proposé ?
-- [10I] Quels avantages présent-il ?
-- [10J] Quels sont les problèmes posés par ce type de sauvegarde ?
+- [10H] Quel type de sauvegarde est proposé ? `La sauvegarde incrémentale est proposée.`
+- [10I] Quels avantages présent-il ? `La sauvegarde incrémentale est donc plus légère que la sauvegarde complète, plus rapide également en traitement.`
+- [10J] Quels sont les problèmes posés par ce type de sauvegarde ? `Cependant, en cas d'une sauvegarde incrémentale erronnée, les prochaines sauvegardes incrémentales ne pourront être effectuées. Il faudra donc refaire une sauvegarde complète après une incrémentale échouée.`
 # 11- Outils graphiques.
 Les outils graphiques apportent un certains confort de travail. Il en existe de très nombreux 
 souvent payant, d’autres gratuits :
@@ -236,12 +236,12 @@ souvent payant, d’autres gratuits :
 * HeidiSQL (uniquement sur Windows)
 * Dbeaver
 Dans la majorité des cas, il est possible de faire une connexion directe sur un serveur mariadb, ou alors de faire une connexion a travers un tunnel SSH
--   [11A] Quel est l’intérêt d’une connexion a travers un tunnel SSH ?
+-   [11A] Quel est l’intérêt d’une connexion a travers un tunnel SSH ? `Les commandes effectuées, les données récupérées via ces commandes également ne peuvent être interceptées car le SSH chiffre les communications.`
  
 # 12- Réplication comme solution de sauvegarde ?
 ***La réplication sur un serveur ou plusieurs serveurs esclaves peut être utilisée comme stratégie complémentaire a la sauvegarde. Regardez le lien suivant : https://mariadb.com/kb/en/library/replication-as-a-backup-solution/***
--   [12A] Quels sont les limites de la réplication ?
--   [12A] Quels sont les usages courant des serveurs de réplications? 
+-   [12A] Quels sont les limites de la réplication ?`La réplication ne peut protéger contre les pertes de données ou une erreur de manipulation.`
+-   [12A] Quels sont les usages courant des serveurs de réplications? `La réplication est notamment utilisée dans les cas de failover ou bien dans un système de load-balancing.`
 (https://mariadb.com/kb/en/mariadb-maxscale-22-maxscale-failover-with-keepalived-and-maxctrl/)
 
 La mise en place d’un serveur mariadb maitre avec un esclave est assez simple.
@@ -254,15 +254,95 @@ La mise en place d’un serveur mariadb maitre avec un esclave est assez simple.
 [mariadb]
 log-bin=mysql-bin
 server-id=1
-log-basename = masterSQLM
+log-basename=masterSQLM
 expire_logs_days=1
 #binlog_expire_logs_seconds=60
 #replicate_do_db = réplication de certaines db
-● Création d’un compte pour la réplication ou attribution des droits sur un compte existant  
+```
+-   Création d’un compte pour la réplication ou attribution des droits sur un compte existant  
 sur le serveur maitre 
-> GRANT REPLICATION SLAVE ON *.* TO root;
-> GRANT ALL PRIVILEGES ON *.* TO 'root'@'IPSLAVE1' IDENTIFIED BY 'PASSWORD' WITH 
-GRANT OPTION;
-> FLUSH PRIVILEGES ;
-> SHOW MASTER STATUS;
+```sql
+CREATE USER 'replicationUser'@'192.168.100.186' IDENTIFIED BY 'password';
+GRANT REPLICATION SLAVE ON *.* TO replicationUser;
+GRANT ALL PRIVILEGES ON *.* TO 'replicationUser'@'192.168.100.186' IDENTIFIED BY 'password' WITH GRANT OPTION;
+FLUSH PRIVILEGES ;
+SHOW MASTER STATUS;
+
+FLUSH TABLES WITH READ LOCK;
+SHOW MASTER STATUS;
+```
+
+```bash
+mysqldump -u root -p --databases worlddb > worlddb.sql
+scp worlddb.sql root@192.168.100.186:/root
+Sur le slave : mysql -u root -p < worlddb.sql
+
+```
+
+```sql 
+UNLOCK TABLES;
+```
+
+-   Configuration du slave
+```
+[mariadb]
+server-id=2
+```
+
+```sql
+CHANGE MASTER TO
+  MASTER_HOST='192.168.100.8',
+  MASTER_USER='replicationUser',
+  MASTER_PASSWORD='password',
+  MASTER_PORT=3306,
+  MASTER_LOG_FILE='masterSQLM-bin.000001',
+  MASTER_LOG_POS=333,
+  MASTER_CONNECT_RETRY=10;
+
+START SLAVE;
+
+SHOW SLAVE STATUS \G
+*************************** 1. row ***************************
+        Slave_IO_State: Waiting for master to send event
+        Master_Host: 192.168.100.8
+        Master_User: replicationUser
+        Master_Port: 3306
+        Connect_Retry: 10
+        Master_Log_File: masterSQLM-bin.000001
+        Read_Master_Log_Pos: 333
+        Relay_Log_File: mariadb-relay-bin.000002
+        Relay_Log_Pos: 560
+        Relay_Master_Log_File: masterSQLM-bin.000001
+        Slave_IO_Running: Yes
+        Slave_SQL_Running: Yes
+
+```
+
+-   On teste la configuration 
+Sur le master :
+```sql
+create database test;
+show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| worlddb            |
++--------------------+
+```
+Sur le slave 
+```sql
+show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| worlddb            |
++--------------------+
 ```
