@@ -95,72 +95,91 @@ Apache,  vérifiez que vous pouvez atteindre le serveur Web
 Docker permet de « versionner » les conteneurs créés et d’automatiser l’installation des services et de fixer rapidement la configuration réseau ainsi que les partages entre le conteneur et l’hôte. 
 
 - Installez, activez et démarrez le service docker.
--   [8A] Il existe 2 solutions pour créé un conteneur docker. Quelles sont elles ?
+-   [8A] Il existe 2 solutions pour créé un conteneur docker. Quelles sont elles ? `Avec une interface graphique grace à Docker Hub ou en ligne de commande avec la commande docker run <options> name `
 -   [8B] La commande ip addr affiche un périphérique nommé docker0 ? A quoi correspond-
-t-il ?
+t-il ? `C'est l'interface réseau qui permet d'utiliser un réseau de type bridge`
 
-9- Utilisation d’un Dockerfile
+9. Utilisation d’un Dockerfile
+
 Pour créer un conteneur vous allez utiliser un Dockerfile. Vous pouvez le faire a partir d’une 
 image disponible sur le dockerhub (https://hub.docker.com/). Il existe tout un ensemble de 
 conteneur prêt a l’emploi (https://hub.docker.com/search?q=&type=image) avec des services 
 installés et configurés. (redis , mondo, nodejs...)
+
 L’autre solution consiste a créer un conteneur a partir d’une image locale ou distante de base
-et a installer et paramétrer les services nécessaires grâce a des commandes placées dans le fichier 
-Dockerfile.
--Le lien https://hub.docker.com/_/httpd vous permettra de déployer un docker avec un 
+et a installer et paramétrer les services nécessaires grâce a des commandes placées dans le fichier Dockerfile.
+
+-   Le lien https://hub.docker.com/_/httpd vous permettra de déployer un docker avec un 
 service Apache fonctionnel
-● [9A] Quel est le contenu du fichier Dockerfile qui est proposé ?
-● [9B] A quoi sert la directive FROM ?
-● [9C] A quoi sert la directive COPY ? 
-● [9D] A quoi correspond ./public-html/
-● [9E] A quoi correspond /usr/local/apache2/htdocs/
-Page 4/6
-● Créez un fichier info.php contenant la commande phpinfo() ; (cf TD serveur web) 
+
+-   [9A] Quel est le contenu du fichier Dockerfile qui est proposé ? 
+```Docker
+FROM httpd:2.4
+COPY ./public-html/ /usr/local/apache2/htdocs/
+```
+-   [9B] A quoi sert la directive FROM ?`Définit l'image de base qui sera utilisée par les instructions suivantes. `
+-   [9C] A quoi sert la directive COPY ? `Permet de copier des fichiers depuis notre machine locale vers le conteneur Docker. `
+-   [9D] A quoi correspond ./public-html/ `Au dossier local`
+-   [9E] A quoi correspond /usr/local/apache2/htdocs/ `Au dossier du conteneur ou il faut copier le contenu du dossier local`
+
+-   Créez un fichier info.php contenant la commande phpinfo() ; (cf TD serveur web) 
 dans le répertoire public-html.
-● [9F] Quelle est la commande utilisée pour créer l’image docker ? Créez une image 
-nommée « apachy »
-● [9G] Quelle commande permet de lister les images présentent dans le dépôt local 
+-   [9F] Quelle est la commande utilisée pour créer l’image docker ? Créez une image 
+nommée « apachy » 
+```Docker
+docker build -t apachy .
+```
+-   [9G] Quelle commande permet de lister les images présentent dans le dépôt local 
 (Repository)
-● [9H] Que contient votre dépôt local ?
-● [9I] Votre dépôt ne devrait contenir que 2 images. Quelle commande devez vous utiliser 
-pour supprimer une image ?
-● [9J] Démarrez votre conteneur nommé « apachy »
+```Docker
+docker images
+```
+-   [9H] Que contient votre dépôt local ?
+```
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+apachy       latest    6879ed60afa5   5 seconds ago   143MB
+httpd        2.4       ad17c88403e2   10 days ago     143MB
+```
+-   [9I] Votre dépôt ne devrait contenir que 2 images. Quelle commande devez vous utiliser 
+pour supprimer une image ? 
+```Docker
+docker rmi name
+```
+-   [9J] Démarrez votre conteneur nommé « apachy »
 A quoi servent les options :  
---name ?
---d
---it
---p
-● [9K] Pouvez vous vérifier que votre conteneur est lancé ? Comment ?
-● [9L] La commande ip addr affiche un périphérique particulier. Lequel ?
-● [9M] Quelle commande permet d’afficher l’IP du conteneur ?
-● [9N] Essayez de joindre le serveur web du conteneur, quelle réponse obtenez vous ?
-● [9M] Récupérez le fichier info.php qui doit être présent sur le serveur web du conteneur 
+
+--name ? ` Definir un nom `
+
+--d `Executer en arrière plan et donner l'id du conteneur `
+
+--it ` Allouer un pseudo TTY (terminal virtuel) et garder un STDIN ouvert `
+
+--p `Faire une redirection de port`
+
+-   [9K] Pouvez vous vérifier que votre conteneur est lancé ? Comment ? 
+```Docker
+docker ps
+Puis regarder son statut qui doit etre up 
+```
+-   [9L] La commande ip addr affiche un périphérique particulier. Lequel ?
+
+-   [9M] Quelle commande permet d’afficher l’IP du conteneur ? 
+```Docker
+docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)
+```
+-   [9N] Essayez de joindre le serveur web du conteneur, quelle réponse obtenez vous ?
+-   [9M] Récupérez le fichier info.php qui doit être présent sur le serveur web du conteneur 
 « apachy ». Qu’observez-vous ?
-10- Création d’une image personnalisée avec un Dockerfile
+
+10.  Création d’une image personnalisée avec un Dockerfile
+
 Vous allez installer les packages nécessaires pour avoir un serveur web dynamique.
-● [10A] A quoi sert la commande RUN présente dans un fichier Dockerfile
-● Créez une image local nommée Web a partir d’une image Fedora 31 
+-   [10A] A quoi sert la commande RUN présente dans un fichier Dockerfile `Exécute des commandes Linux lors de la création de l'image`
+    -   Créez une image local nommée Web a partir d’une image Fedora 31 
 (https://hub.docker.com/_/fedora?tab=tags)
-● Installez Apache dans l’image
-● Installez les packages php php-cli php-gd php-mbstring php-mysqlnd php-pdo php-
-sodium php-xml via le Dockerfile
-● [10A] Lancez l’image. Quelle démarche avez-vous utilisée pour vérifier : 
--Que l’image est lancée ?
-Page 5/6
--Que le serveur web fonctionne ?
--Que le moteur php dans le conteneur répond correctement.
-11-Pour allez plus loin
--Docker est très utilisé avec Swarm (Cluster de conteneur Docker).
--Kubernetes, une technologie conçue a l’origine par Google, permet aussi de gérer des 
-clusters de conteneurs d’application
--IBM a racheté en 2018 la société RedHat pour la somme de 34 Milliards de dollars afin de 
-mettre la main sur la technologie OpenShift
--Gitlab a intégré la technologie Docker dans ces serveurs pour réaliser les TU.
-12- Liens
-https://artisan.karma-lab.net/conteneurs-linux
-https://connect.ed-diamond.com/GNU-Linux-Magazine/GLMF-118/Confinement-de-processus-
-sous-FreeBSD-Jail-et-Linux-OpenVZ
-https://france.devoteam.com/devoblog/la-migration-vers-podman-est-elle-la-solution-pour-se-
-passer-de-docker/
-https://podman.io/
-Page 6/6
+    -   Installez Apache dans l’image
+    -   Installez les packages php php-cli php-gd php-mbstring php-mysqlnd php-pdo php-sodium php-xml via le Dockerfile
+-   [10A] Lancez l’image. Quelle démarche avez-vous utilisée pour vérifier : 
+    -   Que l’image est lancée ?  `docker ps ` 
+    -   Que le serveur web fonctionne ? `netmap`
+    -   Que le moteur php dans le conteneur répond correctement. `Création d'un fichier info.php dans le serveurs web et accéder à la page web`
