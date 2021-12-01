@@ -76,9 +76,9 @@ lxc-checkconfig
 -   [7M] Que contient le fichier config de ce répertoire ? `Les paramètres de configuration du conteneurs`
 -   [7N] Dans la VM, la commande ip addr fait apparaître un périphérique nommé virbr0. Qu’est ce que ce périphérique. A quoi sert-il ?`C'est l'interface utilisé par LXC pour faire le NAT des conteneur`
 -   [7O] Si votre conteneur LXC est bien démarré, la commande ip addr doit aussi afficher un périphérique dont le nom  commence par veth. Qu’est ce que ce périphérique ? Quel est son rôle ? `C'est l'interface réseau du conteneur qui est coinnecté au réseau interne des conteneurs et de la machine`
--   [7P] Lors de la création du conteneur, aucun mdp ne vous a été demandé. Proposez une solution pour changer le mot de passe ` ` 
+-   [7P] Lors de la création du conteneur, aucun mdp ne vous a été demandé. Proposez une solution pour changer le mot de passe `On lance le terminal du conteneur grâce à la commande lxc-attach puis on rentre les commandes voulu, passwd dans notre cas` 
 -   [7Q] Vous avez maintenant 2 options pour vous connecter sur le conteneur. Quels sont 
-elles ? ` `
+elles ? `lxc-attach -n container_centos`
 -   [7R] « Loggez » vous sur le conteneur et :
     - Donnez l’IP `192.168.122.5/24`
     - Installez le service ssh, démarrez-le. Quelles commandes avez vous utilisées ?`  yum install openssh-server et systemctl start sshd`
@@ -183,3 +183,15 @@ Vous allez installer les packages nécessaires pour avoir un serveur web dynamiq
     -   Que l’image est lancée ?  `docker ps ` 
     -   Que le serveur web fonctionne ? `sudo docker exec -d web_c apt-get install net-tools  puis sudo docker exec  web_c netstat On vérifie que le conteneur écoute le protcole web`
     -   Que le moteur php dans le conteneur répond correctement. `Création d'un fichier info.php dans le serveurs web et accéder à la page web`
+
+
+Dockerfile web:
+```Docker
+FROM fedora:31
+
+RUN dnf install -y -q httpd-manual php php-cli php-gd php-mbstring php-mysqlnd php-pdo php-sodium php-xml
+
+EXPOSE 80
+
+ENTRYPOINT systemctl start httpd.service && systemctl enable httpd.service
+```
