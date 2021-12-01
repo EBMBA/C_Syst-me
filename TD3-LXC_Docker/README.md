@@ -161,7 +161,7 @@ A quoi servent les options :
 docker ps
 Puis regarder son statut qui doit etre up 
 ```
--   [9L] La commande ip addr affiche un périphérique particulier. Lequel ? `Command not Found`
+-   [9L] La commande ip addr affiche un périphérique particulier. Lequel ? `veth716fa31@if23`
 
 -   [9M] Quelle commande permet d’afficher l’IP du conteneur ? 
 ```Docker
@@ -171,7 +171,7 @@ docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}
 -   [9M] Récupérez le fichier info.php qui doit être présent sur le serveur web du conteneur 
 « apachy ». Qu’observez-vous ? ``
 
-10.  Création d’une image personnalisée avec un Dockerfile
+1.   Création d’une image personnalisée avec un Dockerfile
 
 Vous allez installer les packages nécessaires pour avoir un serveur web dynamique.
 -   [10A] A quoi sert la commande RUN présente dans un fichier Dockerfile `Exécute des commandes Linux lors de la création de l'image`
