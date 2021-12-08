@@ -232,7 +232,7 @@ La commande fork() permet de "forker" (cloner) le processus courant.
 -   [6A] Quel intérêt a un processus de se 'forké' ? Dans quel TD précédent un processus est-il « forké » ? Pour qu'elles raisons ? `` 
 -   [6B] Quelles sont les particularités d'un processus « forké » `` 
 -   [6C] Quelle différence existe il entre un processus « forké » et un thread ? `` 
--   [6D] Quelle est l'une des limites de l'utilisation de fork() ?`` 
+-   [6D] Quelle est l'une des limites de l'utilisation de fork() ? `Lorsque le processus parent se ferme ou plante pour une raison quelconque, il tue également le processus enfant.` 
 -   [6E] Quels problèmes peuvent poser les threads ?`` 
 
 
@@ -241,14 +241,136 @@ La commande fork() permet de "forker" (cloner) le processus courant.
 Ecrire un programme avec un processus père qui lance n processus fils, le nombre n étant 
 saisi au clavier. On vérifiera lors de la saisie que le nombre n est inférieur à 10. Chaque processus fils devra attendre un nombre aléatoire de secondes, compris entre 10 et 120,  avant d'afficher "je suis un fils "  et son PID
 
--   [7A] Que donne les commandes ps et pstree pendant l’exécution du programme ? ``
+```C
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main(int argc, char *argv[])
+{
+
+    /* fork a child process */
+    pid_t pid;
+    int i = 0;
+    int nbrFils = 0;
+
+    printf("Son of number : ");
+    scanf("%d", &nbrFils);
+
+    for (int i = 0; i < nbrFils; i++)
+    {
+        pid = fork();
+        if (pid < 0)
+        { 
+            fprintf(stderr, "Fork Failed");
+            return 1;
+        }
+
+        else if (pid == 0)
+        {       
+            int num = (rand() % (120 - 10 + 1)) + 10;
+            sleep(num);
+            printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid()); 
+            exit(0);
+        }
+
+        else
+        {   
+            wait(NULL);
+            printf("Child Complete \n");
+        }
+    }
+}
+```
+
+
+-   [7A] Que donne les commandes ps et pstree pendant l’exécution du programme ? `pstree : ├─8*[main] On voit donc que les processus se lance à partir du main.  ps -aux : Nous donne plusieurs main.c qui son executé`
 -   [7B] Observez l’état des processus.Que se passe-t-il ? Corriger le code du processus père 
-pour que les processus se terminent correctement.
+pour que les processus se terminent correctement. `L'état est Z car le processus parent n'est pas notifié de l'arrêt du processus enfant. On rajoute le wait(NULL) dans le processus parents.`
 -   [7C] Modifiez le code précédent pour que les fils affichent "Je suis le fils numero n ". La 
-valeur de n est le numéro d'ordre de création du fils. Le fils doit aussi affiché sont PID, ainsi que le 
-PID du père.
+valeur de n est le numéro d'ordre de création du fils. Le fils doit aussi affiché sont PID, ainsi que le PID du père. 
+```C
+PAS Fini 
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main(int argc, char *argv[])
+{
+
+    /* fork a child process */
+    pid_t pid;
+    int i = 0;
+    int nbrFils = 0;
+
+    printf("Number of childs: ");
+    scanf("%d", &nbrFils);
+
+    while (1)
+    {
+        while (i < nbrFils)
+        {
+            pid = fork();
+            if (pid < 0)
+            {
+                fprintf(stderr, "Fork Failed");
+                return 1;
+            }
+
+            else if (pid == 0)
+            {
+                // int num = (rand() % (120 - 10 + 1)) + 10;
+                // sleep(num);
+                printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid());
+                exit(0);
+                i++;
+            }
+
+            else
+            {
+                wait(NULL);
+                printf("Child Complete \n");
+            }
+        }
+    }
+
+    for (int i = 0; i < nbrFils; i++)
+    {
+        pid = fork();
+        if (pid < 0)
+        {
+            fprintf(stderr, "Fork Failed");
+            return 1;
+        }
+
+        else if (pid == 0)
+        {
+            int num = (rand() % (120 - 10 + 1)) + 10;
+            sleep(num);
+            printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid());
+            exit(0);
+        }
+
+        else
+        {
+            wait(NULL);
+            printf("Child Complete \n");
+        }
+    }
+}
+```
 -   [7D] Modifiez le programme précédent pour qu'il y ait toujours le même nombre d'enfants
 en fonction.
+
 -   [7E] Créez une variable globale. Chaque fils devra afficher la variable globale avant de la 
 modifier de facon aléatoire et afficher la nouvelle valeur, juste avant de terminer son activité. Qu'observez vous ? Est-ce cohérent avec les questions de la partie 6 ?
 
@@ -269,20 +391,21 @@ La fonction prend donc en paramètre deux arguments :
 fonction(int codeRetour, void* argument). Le premier paramètre de cette routine est un entier 
 correspondant au code transmis avec l'utilisation de return ou de exit.
      -L'argument à passer à la fonction.
-Page 9/10
+
 Elle renvoie 0 en cas de réussite ou -1 sinon.
 Il est à noter qu'il est préférable d'utiliser atexit plutôt que on_exit, la première étant 
 conforme C89, ce qui n'est pas le cas de la seconde.
 ● [8A] Modifiez le programme précédent pour que les processus affichent "Bye" en utilisant
 une fonction de terminaison.
-9- Exécution de programme externe : exec
+
+## 9- Exécution de programme externe : exec
+
 L’appel système exec permet de remplacer le programme en cours par un autre programme 
-sans changer de numéro de processus (PID). Autrement dit, un programme peut se faire remplacer 
-par un autre code source ou un script shell en faisant appel à exec. Il y a en fait plusieurs fonctions 
-de la famille exec qui sont légèrement différentes.
+sans changer de numéro de processus (PID). Autrement dit, un programme peut se faire remplacer par un autre code source ou un script shell en faisant appel à exec. Il y a en fait plusieurs fonctions de la famille exec qui sont légèrement différentes.
+
 La fonction execl prend en paramètre une liste des arguments à passer au programme (liste 
 terminée par NULL).
-  /* dernier  élément NULL, OBLIGATOIRE */
+ /* dernier  élément NULL, OBLIGATOIRE */
 execl ( ”/ usr / bin /emacs” ,  ”emacs” ,  ” f i c h i e r . c” ,  ” f i c h i e r . h” , NULL) ;
 perror ( ”Problème : cette  partie du code ne doit jamais être exécutée ” ) ;
 return 0 ;
