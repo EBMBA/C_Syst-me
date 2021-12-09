@@ -77,102 +77,89 @@ Enfin, dernière chose à retenir : les systèmes basés sur Unix sont des syst�
 
 ## 2. Particularités de la gestion des processus sous Unix
 
-Dans les systèmes basés sur Unix tout particulièrement, les processus jouent un rôle très important. Le concept de processus a été mis au point dès les débuts de ce système : il a ainsi participé à sa gloire et à sa célébrité. Une des particularités de la gestion des processus sous Unix consiste à séparer la création d'un processus et l'exécution d'une image binaire. Bien que la plupart du temps ces deux tâches sont exécutées ensemble, cette division a permis de nouvelles libertés quant à la gestion des tâches. Par exemple, cela permet d'avoir plusieurs processus pour un même 
-programme.
+Dans les systèmes basés sur Unix tout particulièrement, les processus jouent un rôle très important. 
+
+Le concept de processus a été mis au point dès les débuts de ce système : il a ainsi participé à sa gloire et à sa célébrité. Une des particularités de la gestion des processus sous Unix consiste à séparer la création d'un processus et l'exécution d'une image binaire. Bien que la plupart du temps ces deux tâches sont exécutées ensemble, cette division a permis de nouvelles libertés quant à la gestion des tâches. Par exemple, cela permet d'avoir plusieurs processus pour un même programme.
+
 Autrement dit, sous les autres systèmes d'exploitation (mis à part quelques exceptions), processus = nouveau programme, alors que sous Unix ce n'est pas forcément le cas.
 
-- Le PID Chaque processus peut être identifié par son numéro de processus, ou PID (Process IDentifier).
+### Le PID 
+
+Chaque processus peut être identifié par son numéro de processus, ou PID (Process IDentifier).
 
 Un numéro de PID est unique dans le système : il est impossible que deux processus aient un même PID au même moment.
 
 Lorsque l'on crée un processus , on utilise une fonction qui permet de dupliquer le processus appelant. On distingue alors les deux processus par leur PID. Le processus appelant est alors nommé processus père et le nouveau processus fils. Quand on s'occupe du processus fils, le PID du processus père est noté PPID (Parent PID).
 
-- L'UID Les systèmes basés sur Unix sont particulièrement axés sur le côté multi-utilisateur. Ainsi, il existe de très nombreuses sécurités sur les permissions nécessaires pour exécuter telle ou telle action.
+### L'UID 
+
+Les systèmes basés sur Unix sont particulièrement axés sur le côté multi-utilisateur. Ainsi, il existe de très nombreuses sécurités sur les permissions nécessaires pour exécuter telle ou telle action.
 
 C'est pour cela que chaque utilisateur possède un identifiant, sous forme numérique, nommé UID (User IDentifier).
-En conséquence, nous pouvons également distinguer les processus entre eux par l'UID de 
-l'utilisateur qui les a lancés.
+
+En conséquence, nous pouvons également distinguer les processus entre eux par l'UID de l'utilisateur qui les a lancés.
+
 Quelques remarques sur la valeur de l'UID
-     La valeur de l'UID est comprise entre les constantes UID_MIN et UID_MAX du fichier 
-/etc/login.defs.
-     Conventionnellement, plus l'UID est bas, plus l'utilisateur a des privilèges. Néanmoins, 
-l'attribution de l'UID est de la compétence de l'administrateur du système. Ainsi, cette règle n'est pas
-toujours vérifiable.
-    Les valeurs inférieures à 100 (1000 actuellement)  sont généralement réservées aux utilisateurs 
-standards (« par défaut » si vous préférez).
-- Permission Set – UID
-Il existe une permission spéciale, uniquement pour les exécutables binaires, appelée la 
-permission Set – UID. Cette permission permet à l'utilisateur ayant les droits d'exécution sur ce 
-fichier d'exécuter le fichier avec les privilèges de son propriétaire. On met les droits Set - UID avec 
-la commande chmod et l'argument +s. On passe en second argument le nom du fichier.
-- Organisation des processus
-Les processus sont organisés en hiérarchie. Chaque processus doit être lancé par un autre. La
-racine de cette hiérarchie est le programme initial. 
-Le processus inactif du système (System idle process : le processus que le noyau exécute 
-tant qu'il n'y a pas d'autres processus en cours d'exécution) a le PID 0. C'est celui-ci qui lance le 
-premier processus que le noyau exécute, le programme initial. Généralement, sous les systèmes 
+-   La valeur de l'UID est comprise entre les constantes UID_MIN et UID_MAX du fichier /etc/login.defs.
+-   Conventionnellement, plus l'UID est bas, plus l'utilisateur a des privilèges. Néanmoins, l'attribution de l'UID est de la compétence de l'administrateur du système. Ainsi, cette règle n'est pas toujours vérifiable. Les valeurs inférieures à 100 (1000 actuellement)  sont généralement réservées aux utilisateurs standards (« par défaut » si vous préférez).
+
+### Permission Set – UID
+Il existe une permission spéciale, uniquement pour les exécutables binaires, appelée la permission Set – UID. Cette permission permet à l'utilisateur ayant les droits d'exécution sur ce fichier d'exécuter le fichier avec les privilèges de son propriétaire. On met les droits Set - UID avec la commande chmod et l'argument +s. On passe en second argument le nom du fichier.
+
+
+### Organisation des processus
+
+Les processus sont organisés en hiérarchie. Chaque processus doit être lancé par un autre. La racine de cette hiérarchie est le programme initial.
+
+Le processus inactif du système (System idle process : le processus que le noyau exécute tant qu'il n'y a pas d'autres processus en cours d'exécution) a le PID 0. C'est celui-ci qui lance le premier processus que le noyau exécute, le programme initial. Généralement, sous les systèmes 
 basés sous Unix, le programme initial se nomme init, et il a le PID 1.
-Si l'utilisateur indique au noyau le programme initial à exécuter, celui-ci tente alors de le 
-faire avec quatre exécutables, dans l'ordre suivant : /sbin/init, /etc/init puis /bin/init.
-Le premier de ces processus qui existe est exécuté en tant que programme initial.
-Page 4/10
-Si les quatre programmes n'ont pas pu être exécutés, le système s'arrête : panique du 
-noyau... (Kernel panic)
-Après son chargement, le programme initial gère le reste du démarrage : initialisation du 
-système, lancement d'un programme de connexion... Il va également se charger de lancer les 
-démons. Un démon (du terme anglais daemon) est un processus qui est constamment en activité en 
-arriere plan et fournit des services au système.
-- Les états d'un processus
+Si l'utilisateur indique au noyau le programme initial à exécuter, celui-ci tente alors de le faire avec quatre exécutables, dans l'ordre suivant : /sbin/init, /etc/init puis /bin/init. Le premier de ces processus qui existe est exécuté en tant que programme initial.Si les quatre programmes n'ont pas pu être exécutés, le système s'arrête : panique du noyau... (Kernel panic).
+
+Après son chargement, le programme initial gère le reste du démarrage : initialisation du système, lancement d'un programme de connexion... Il va également se charger de lancer les démons. Un démon (du terme anglais daemon) est un processus qui est constamment en activité en arriere plan et fournit des services au système.
+
+### Les états d'un processus
+
+
 Un processus peut avoir plusieurs états :
-     * exécution (R pour running) : le processus est en cours d'exécution ;
-     * sommeil (S pour sleeping) : dans un multitâche coopératif, quand il rend la main ; 
-ou dans un multitâche préemptif, quand il est interrompu au bout d'un quantum de temps ;
-     * arrêt (T pour stopped) : le processus a été temporairement arrêté par un signal. Il ne
-s'exécute plus et ne réagira qu'à un signal de redémarrage ;
-     * zombie (Z pour ... zombie) : le processus s'est terminé, mais son père n'a pas 
-encore lu son code de retour.
-Lorsqu’un processus est dans l’état « en train de s’exécuter »R, il peut exécuter des 
-instructions du processeur (par exemple pour effectuer des calculs), ou faire des appels système. 
-Parfois, le noyau peut satisfaire l’appel système immédiatement — par exemple, un appel à time 
-calcule l’heure et retourne immédiatement au code utilisateur.
-Souvent, cependant, un appel système demande une interaction prolongée avec le monde 
-réel; un processus exécutant un tel appel système est mis en attente d’un événement (état W), et ne 
-sera réveillé (passé à l’état « prêt à s’exécuter »r) que lorsque l’appel système sera prêt à retourner. 
-Un tel appel système est dit bloquant (accès aux disques durs par exemple)
-De plus, sous Unix, un processus peut évoluer dans deux modes différents : le mode noyau 
-et le mode utilisateur. Généralement, un processus utilisateur entre dans le mode noyau quand il 
-effectue un appel-système.
-Page 5/10
-- Implémentation des processus
-Pour implémenter les processus, le système d'exploitation utilise un tableau de structure, 
-appelé table des processus. Cette dernière comprend une entrée par processus, allouée 
-dynamiquement, correspondant au processus associé à ce programme : c'est le bloc de contrôle du 
-processus (Process Control Block, souvent abrégé PCB). Ce bloc contient, entres autres, les 
-informations suivantes :
+* exécution (R pour running) : le processus est en cours d'exécution ;
+* sommeil (S pour sleeping) : dans un multitâche coopératif, quand il rend la main ; ou dans un multitâche préemptif, quand il est interrompu au bout d'un quantum de temps ;
+* arrêt (T pour stopped) : le processus a été temporairement arrêté par un signal. Il ne s'exécute plus et ne réagira qu'à un signal de redémarrage ;
+* zombie (Z pour ... zombie) : le processus s'est terminé, mais son père n'a pas encore lu son code de retour.
+
+Lorsqu’un processus est dans l’état « en train de s’exécuter »R, il peut exécuter des instructions du processeur (par exemple pour effectuer des calculs), ou faire des appels système. 
+
+Parfois, le noyau peut satisfaire l’appel système immédiatement — par exemple, un appel à time calcule l’heure et retourne immédiatement au code utilisateur.
+
+Souvent, cependant, un appel système demande une interaction prolongée avec le monde réel; un processus exécutant un tel appel système est mis en attente d’un événement (état W), et ne sera réveillé (passé à l’état « prêt à s’exécuter »r) que lorsque l’appel système sera prêt à retourner. Un tel appel système est dit bloquant (accès aux disques durs par exemple)
+
+De plus, sous Unix, un processus peut évoluer dans deux modes différents : le mode noyau et le mode utilisateur. Généralement, un processus utilisateur entre dans le mode noyau quand il effectue un appel-système.
+
+### Implémentation des processus
+
+Pour implémenter les processus, le système d'exploitation utilise un tableau de structure, appelé table des processus. Cette dernière comprend une entrée par processus, allouée dynamiquement, correspondant au processus associé à ce programme : c'est le bloc de contrôle du processus (Process Control Block, souvent abrégé PCB). 
+
+Ce bloc contient, entres autres, les informations suivantes :
 * le PID, le PPID, l'UID et le GID du processus ;
-     * l'état du processus ;
-     * les fichiers ouverts par le processus ;
-     * le répertoire courant du processus ;
-     * le terminal attaché au processus ;
-     * les signaux reçus par le processus ;
-     * le contexte processeur et mémoire du processus (c'est-à-dire l'état des registres et des 
-données mémoires du processus).
-Grâce à ces informations stockées dans la table des processus, un processus bloqué pourra 
-redémarrer ultérieurement avec les mêmes caractéristiques.
-- Les threads
-Dans la plupart des systèmes d'exploitation, chaque processus possède un espace d'adressage
-et un thread de contrôle unique, le thread principal. Du point de vue programmation, ce dernier 
-exécute le "main".
-En général, le système réserve un processus à chaque application, sauf quelques exceptions. 
-Beaucoup de programmes exécutent plusieurs activités en parallèle, du moins en apparent 
-parallélisme, comme nous l'avons vu précédemment.
-Le principal avantage des threads par rapport aux processus, c'est la facilité et la rapidité de 
-leur création. En effet, tous les threads d'un même processus partagent le même espace d'adressage, 
-et donc toutes les variables. Cela évite donc l'allocation de tous ces espaces lors de la création, et il 
-est à noter que, sur de nombreux systèmes, la création d'un thread est environ cent fois plus rapide 
-que celle d'un processus.
-Au-delà de la création, la superposition de l'exécution des activités dans une même 
-application permet une importante accélération quant au fonctionnement de cette dernière.
+* l'état du processus ;
+* les fichiers ouverts par le processus ;
+* le répertoire courant du processus ;
+* le terminal attaché au processus ;
+* les signaux reçus par le processus ;
+* le contexte processeur et mémoire du processus (c'est-à-dire l'état des registres et des données mémoires du processus).
+
+Grâce à ces informations stockées dans la table des processus, un processus bloqué pourra redémarrer ultérieurement avec les mêmes caractéristiques.
+
+### Les threads
+
+
+Dans la plupart des systèmes d'exploitation, chaque processus possède un espace d'adressage et un thread de contrôle unique, le thread principal. Du point de vue programmation, ce dernier exécute le "main".
+
+En général, le système réserve un processus à chaque application, sauf quelques exceptions. Beaucoup de programmes exécutent plusieurs activités en parallèle, du moins en apparent parallélisme, comme nous l'avons vu précédemment.
+
+Le principal avantage des threads par rapport aux processus, c'est la facilité et la rapidité de leur création. En effet, tous les threads d'un même processus partagent le même espace d'adressage, et donc toutes les variables. Cela évite donc l'allocation de tous ces espaces lors de la création, et il est à noter que, sur de nombreux systèmes, la création d'un thread est environ cent fois plus rapide que celle d'un processus.
+
+Au-delà de la création, la superposition de l'exécution des activités dans une même application permet une importante accélération quant au fonctionnement de cette dernière.
+
 La communication entre les threads est plus aisée que celle entre les processus, pour lesquels on doit utiliser des notions compliquées comme les tubes.
 
 ## 3- Commandes de base
@@ -371,8 +358,7 @@ int main(int argc, char *argv[])
 -   [7D] Modifiez le programme précédent pour qu'il y ait toujours le même nombre d'enfants
 en fonction.
 
--   [7E] Créez une variable globale. Chaque fils devra afficher la variable globale avant de la 
-modifier de facon aléatoire et afficher la nouvelle valeur, juste avant de terminer son activité. Qu'observez vous ? Est-ce cohérent avec les questions de la partie 6 ?
+-   [7E] Créez une variable globale. Chaque fils devra afficher la variable globale avant de la modifier de facon aléatoire et afficher la nouvelle valeur, juste avant de terminer son activité. Qu'observez vous ? Est-ce cohérent avec les questions de la partie 6 ?
 
 ## 8. Exécution de routines de terminaison
 
