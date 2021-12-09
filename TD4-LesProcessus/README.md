@@ -37,7 +37,8 @@ Du point de vue matériel, le processeur passe d'un processus à un autre en que
 parallélisme, à différencier avec le véritable parallélisme des systèmes multiprocesseurs.
 
 Les processus sont la base du pseudo-parallélisme.
-2. Programmes et processus
+
+### 2. Programmes et processus
 
 Il est très important de différencier la notion de programme et la notion de processus.
 
@@ -111,8 +112,7 @@ Il existe une permission spéciale, uniquement pour les exécutables binaires, a
 
 Les processus sont organisés en hiérarchie. Chaque processus doit être lancé par un autre. La racine de cette hiérarchie est le programme initial.
 
-Le processus inactif du système (System idle process : le processus que le noyau exécute tant qu'il n'y a pas d'autres processus en cours d'exécution) a le PID 0. C'est celui-ci qui lance le premier processus que le noyau exécute, le programme initial. Généralement, sous les systèmes 
-basés sous Unix, le programme initial se nomme init, et il a le PID 1.
+Le processus inactif du système (System idle process : le processus que le noyau exécute tant qu'il n'y a pas d'autres processus en cours d'exécution) a le PID 0. C'est celui-ci qui lance le premier processus que le noyau exécute, le programme initial. Généralement, sous les systèmes basés sous Unix, le programme initial se nomme init, et il a le PID 1.
 Si l'utilisateur indique au noyau le programme initial à exécuter, celui-ci tente alors de le faire avec quatre exécutables, dans l'ordre suivant : /sbin/init, /etc/init puis /bin/init. Le premier de ces processus qui existe est exécuté en tant que programme initial.Si les quatre programmes n'ont pas pu être exécutés, le système s'arrête : panique du noyau... (Kernel panic).
 
 Après son chargement, le programme initial gère le reste du démarrage : initialisation du système, lancement d'un programme de connexion... Il va également se charger de lancer les démons. Un démon (du terme anglais daemon) est un processus qui est constamment en activité en arriere plan et fournit des services au système.
@@ -278,8 +278,10 @@ int main(int argc, char *argv[])
 -   [7A] Que donne les commandes ps et pstree pendant l’exécution du programme ? `pstree : ├─8*[main] On voit donc que les processus se lance à partir du main.  ps -aux : Nous donne plusieurs main.c qui son executé`
 -   [7B] Observez l’état des processus.Que se passe-t-il ? Corriger le code du processus père 
 pour que les processus se terminent correctement. `L'état est Z car le processus parent n'est pas notifié de l'arrêt du processus enfant. On rajoute le wait(NULL) dans le processus parents.`
--   [7C] Modifiez le code précédent pour que les fils affichent "Je suis le fils numero n ". La 
-valeur de n est le numéro d'ordre de création du fils. Le fils doit aussi affiché sont PID, ainsi que le PID du père. 
+-   [7C] Modifiez le code précédent pour que les fils affichent "Je suis le fils numero n ". La valeur de n est le numéro d'ordre de création du fils. Le fils doit aussi affiché sont PID, ainsi que le PID du père. 
+
+-   [7D] Modifiez le programme précédent pour qu'il y ait toujours le même nombre d'enfants
+en fonction.
 ```C
 PAS Fini 
 
@@ -304,60 +306,35 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        while (i < nbrFils)
+        if (i < nbrFils)
         {
-            pid = fork();
-            if (pid < 0)
+            for (int i = 0; i < nbrFils; i++)
             {
-                fprintf(stderr, "Fork Failed");
-                return 1;
+                pid = fork();
+                if (pid < 0)
+                {
+                    fprintf(stderr, "Fork Failed");
+                    return 1;
+                }
+
+                else if (pid == 0)
+                {
+                    int num = (rand() % (120 - 10 + 1)) + 10;
+                    sleep(num);
+                    printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid());
+                    exit(0);
+                }
+
+                else
+                {
+                    wait(NULL);
+                    printf("Child Complete \n");
+                }
             }
-
-            else if (pid == 0)
-            {
-                // int num = (rand() % (120 - 10 + 1)) + 10;
-                // sleep(num);
-                printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid());
-                exit(0);
-                i++;
-            }
-
-            else
-            {
-                wait(NULL);
-                printf("Child Complete \n");
-            }
-        }
-    }
-
-    for (int i = 0; i < nbrFils; i++)
-    {
-        pid = fork();
-        if (pid < 0)
-        {
-            fprintf(stderr, "Fork Failed");
-            return 1;
-        }
-
-        else if (pid == 0)
-        {
-            int num = (rand() % (120 - 10 + 1)) + 10;
-            sleep(num);
-            printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid());
-            exit(0);
-        }
-
-        else
-        {
-            wait(NULL);
-            printf("Child Complete \n");
         }
     }
 }
 ```
--   [7D] Modifiez le programme précédent pour qu'il y ait toujours le même nombre d'enfants
-en fonction.
-
 -   [7E] Créez une variable globale. Chaque fils devra afficher la variable globale avant de la modifier de facon aléatoire et afficher la nouvelle valeur, juste avant de terminer son activité. Qu'observez vous ? Est-ce cohérent avec les questions de la partie 6 ?
 
 ## 8. Exécution de routines de terminaison
