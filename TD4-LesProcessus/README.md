@@ -4,6 +4,30 @@
 **Administration des systèmes Linux**
 
 # TD4 – Programmation C Système / Les processus
+***EMILE METRAL ICS***
+
+- [TD4 – Programmation C Système / Les processus](#td4--programmation-c-système--les-processus)
+  - [1- Quelques définitions](#1--quelques-définitions)
+    - [1. Parallélisme et pseudo-parallélisme](#1-parallélisme-et-pseudo-parallélisme)
+    - [2. Programmes et processus](#2-programmes-et-processus)
+    - [3. Espace d’adressage des processus](#3-espace-dadressage-des-processus)
+    - [4. Virtualisation de la mémoire](#4-virtualisation-de-la-mémoire)
+    - [5 Ordonnancement des processus](#5-ordonnancement-des-processus)
+  - [2. Particularités de la gestion des processus sous Unix](#2-particularités-de-la-gestion-des-processus-sous-unix)
+    - [Le PID](#le-pid)
+    - [L'UID](#luid)
+    - [Permission Set – UID](#permission-set--uid)
+    - [Organisation des processus](#organisation-des-processus)
+    - [Les états d'un processus](#les-états-dun-processus)
+    - [Implémentation des processus](#implémentation-des-processus)
+    - [Les threads](#les-threads)
+  - [3- Commandes de base](#3--commandes-de-base)
+  - [4- Gestion des processus](#4--gestion-des-processus)
+  - [5- Redirection de flux](#5--redirection-de-flux)
+  - [6. Création d'un processus en C](#6-création-dun-processus-en-c)
+  - [7. Utilisation de fork, wait, waitpid, sleep](#7-utilisation-de-fork-wait-waitpid-sleep)
+  - [8. Exécution de routines de terminaison](#8-exécution-de-routines-de-terminaison)
+  - [9- Exécution de programme externe : exec](#9--exécution-de-programme-externe--exec)
 
 Ce cours et TD porte sur l’utilisation des appels système des systèmes de la famille Unix : 
 Linux, MacOS X, AIX,  LynxOS, BeOS, QNX, OpenBSD, FreeBSD,NetBSD.
@@ -525,6 +549,7 @@ return 0 ;
 En réalité, il existe six fonctions appartenant à cette famille : execl, execle, execlp, execv, execve et execvp
 
 -   [9A] Modifiez le programme précédent pour que chaque processus fils lance l’exécution du programme randomgenerator avec un nombre de valeur comprise entre 10 et 20. (i.e. randomgenerator -n 15 )
+```C
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
@@ -587,4 +612,5 @@ int main(int argc, char *argv[])
     }
 
 }
+```
 
