@@ -216,11 +216,25 @@ data.txt | sort -n `Afficher le contenu de data.txt trié`
 
 La commande fork() permet de "forker" (cloner) le processus courant. 
 
--   [6A] Quel intérêt a un processus de se 'forké' ? Dans quel TD précédent un processus est-il « forké » ? Pour qu'elles raisons ? `` 
--   [6B] Quelles sont les particularités d'un processus « forké » `` 
--   [6C] Quelle différence existe il entre un processus « forké » et un thread ? `` 
+-   [6A] Quel intérêt a un processus de se 'forké' ? Dans quel TD précédent un processus est-il « forké » ? Pour qu'elles raisons ? `Un processus fork permet de lancer des tache en simultanee comme lors du TD Apache. Apache se sert des fork pour pouvoir traiter toutes les requetes` 
+-   [6B] Quelles sont les particularités d'un processus « forké » `Chaque fork a son propre espace de d'adressage.` 
+-   [6C] Quelle différence existe il entre un processus « forké » et un thread ? 
+```
+Les threads sont des processus légers (LWP). Traditionnellement, un thread n'est qu'un état du processeur (et un autre état minimal) avec le processus contenant le reste (données, pile, E / S, signaux). Les threads nécessitent moins de temps système que «forking» ou engendrer un nouveau processus car le système n'initialise pas un nouvel espace de mémoire virtuelle système et un nouvel environnement pour le processus. Bien que plus efficace sur un système multiprocesseur où le flux de processus peut être programmé pour s'exécuter sur un autre processeur, gagnant ainsi en vitesse grâce au traitement parallèle ou distribué, des gains sont également trouvés sur les systèmes monoprocesseurs qui exploitent la latence des E / S et d'autres fonctions système qui peuvent interrompre le processus. exécution.
+
+Les threads du même processus partagent:
+
+-   instructions de processus
+-   la plupart des données
+-   fichiers ouverts (descripteurs)
+-   signaux et gestionnaires de signaux
+-   répertoire de travail actuel
+-   identifiant d'utilisateur et de groupe
+
+En conclusion les threads sont bons pour exécuter une tâche en parallèle, tandis que les forks sont des processus indépendants, qui s'exécutent également simultanément. 
+```
 -   [6D] Quelle est l'une des limites de l'utilisation de fork() ? `Lorsque le processus parent se ferme ou plante pour une raison quelconque, il tue également le processus enfant.` 
--   [6E] Quels problèmes peuvent poser les threads ?`` 
+-   [6E] Quels problèmes peuvent poser les threads ?`Lorsqu'un thread bloque (en attente d'E / S ou en appelant l'IOCTL d'un pilote), tous les threads bloquent. Les threads légers ne peuvent s'exécuter que sur un seul cœur - il y a donc beaucoup d'amélioration des performances en ayant plusieurs threads.` 
 
 
 ## 7. Utilisation de fork, wait, waitpid, sleep
@@ -283,8 +297,6 @@ pour que les processus se terminent correctement. `L'état est Z car le processu
 -   [7D] Modifiez le programme précédent pour qu'il y ait toujours le même nombre d'enfants
 en fonction.
 ```C
-PAS Fini 
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
@@ -336,51 +348,243 @@ int main(int argc, char *argv[])
 }
 ```
 -   [7E] Créez une variable globale. Chaque fils devra afficher la variable globale avant de la modifier de facon aléatoire et afficher la nouvelle valeur, juste avant de terminer son activité. Qu'observez vous ? Est-ce cohérent avec les questions de la partie 6 ?
+```C
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+extern int globalValue;
+
+int main(int argc, char *argv[])
+{
+
+    /* fork a child process */
+    pid_t pid;
+    int i = 0;
+    int nbrFils = 0;
+    int globalValue = 0;
+
+    printf("Number of childs: ");
+    scanf("%d", &nbrFils);
+
+    while (1)
+    {
+        if (i < nbrFils)
+        {
+            for (int i = 0; i < nbrFils; i++)
+            {
+                pid = fork();
+                srand(time(0));
+                if (pid < 0)
+                {
+                    fprintf(stderr, "Fork Failed");
+                    return 1;
+                }
+
+                else if (pid == 0)
+                {
+                    int num = (rand() % (12 - 10 + 1)) + 10;
+                    sleep(num);
+                    printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    globalValue = (rand() % (120 - 10 + 1)) + 10;
+                    printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    exit(0);
+                }
+
+                else
+                {
+                    wait(NULL);
+                    printf("Child Complete and global value G : %d\n", globalValue);
+                }
+            }
+        }
+    }
+
+}
+```
+
+` Les changements dans la variable globale ne sont effectifs que dans les fils et ne prennent pas effet dans les autres processus. C'est normal car les espaces d'adressage sont propres a chaque processus et ne sont pas partage comme pour les threads.` 
 
 ## 8. Exécution de routines de terminaison
 
-Grâce à la programmation système, il est possible d'exécuter automatiquement telle ou telle 
-fonction au moment où le programme se termine normalement, c'est-à-dire à l'aide des instructions exit et return.
+Grâce à la programmation système, il est possible d'exécuter automatiquement telle ou telle fonction au moment où le programme se termine normalement, c'est-à-dire à l'aide des instructions exit et return.
 
 Pour cela, deux fonctions sont disponibles : atexit et on_exit.
+```C
 #include <stdlib.h>
 int atexit(void (*function) (void));
+```
+
 Le paramètre est un pointeur de fonction vers la fonction à exécuter lors de la terminaison. 
 Elle renvoie 0 en cas de réussite ou -1 sinon.
+
+```C
 #include <stdlib.h>
 int on_exit(void (*function) (int, void *), void *arg);
+```
+
 La fonction prend donc en paramètre deux arguments :
--Un pointeur sur la fonction à exécuter, qui sera, cette fois, de la forme void 
-fonction(int codeRetour, void* argument). Le premier paramètre de cette routine est un entier 
-correspondant au code transmis avec l'utilisation de return ou de exit.
-     -L'argument à passer à la fonction.
+-   Un pointeur sur la fonction à exécuter, qui sera, cette fois, de la forme void fonction(int codeRetour, void* argument). Le premier paramètre de cette routine est un entier correspondant au code transmis avec l'utilisation de return ou de exit.
+-   L'argument à passer à la fonction.
 
 Elle renvoie 0 en cas de réussite ou -1 sinon.
-Il est à noter qu'il est préférable d'utiliser atexit plutôt que on_exit, la première étant 
-conforme C89, ce qui n'est pas le cas de la seconde.
-● [8A] Modifiez le programme précédent pour que les processus affichent "Bye" en utilisant
-une fonction de terminaison.
+
+Il est à noter qu'il est préférable d'utiliser atexit plutôt que on_exit, la première étant conforme C89, ce qui n'est pas le cas de la seconde.
+
+-   [8A] Modifiez le programme précédent pour que les processus affichent "Bye" en utilisant une fonction de terminaison.
+
+```C
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+extern int globalValue;
+
+void bye(){
+    printf("bye\n");
+}
+
+int main(int argc, char *argv[])
+{
+
+    /* fork a child process */
+    pid_t pid;
+    int i = 0;
+    int nbrFils = 0;
+    int globalValue = 0;
+
+    printf("Number of childs: ");
+    scanf("%d", &nbrFils);
+
+    while (1)
+    {
+        if (i < nbrFils)
+        {
+            for (int i = 0; i < nbrFils; i++)
+            {
+                pid = fork();
+                srand(time(0));
+                if (pid < 0)
+                {
+                    fprintf(stderr, "Fork Failed");
+                    return 1;
+                }
+
+                else if (pid == 0)
+                {
+                    int num = (rand() % (12 - 10 + 1)) + 10;
+                    sleep(num);
+                    printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    globalValue = (rand() % (120 - 10 + 1)) + 10;
+                    printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    atexit(bye);
+                    exit(0);
+                }
+
+                else
+                {
+                    wait(NULL);
+                    printf("Child Complete and global value G : %d\n", globalValue);
+                }
+            }
+        }
+    }
+
+}
+```
 
 ## 9- Exécution de programme externe : exec
 
-L’appel système exec permet de remplacer le programme en cours par un autre programme 
-sans changer de numéro de processus (PID). Autrement dit, un programme peut se faire remplacer par un autre code source ou un script shell en faisant appel à exec. Il y a en fait plusieurs fonctions de la famille exec qui sont légèrement différentes.
+L’appel système exec permet de remplacer le programme en cours par un autre programme sans changer de numéro de processus (PID). Autrement dit, un programme peut se faire remplacer par un autre code source ou un script shell en faisant appel à exec. Il y a en fait plusieurs fonctions de la famille exec qui sont légèrement différentes.
 
-La fonction execl prend en paramètre une liste des arguments à passer au programme (liste 
-terminée par NULL).
+La fonction execl prend en paramètre une liste des arguments à passer au programme (liste terminée par NULL).
+```C
  /* dernier  élément NULL, OBLIGATOIRE */
 execl ( ”/ usr / bin /emacs” ,  ”emacs” ,  ” f i c h i e r . c” ,  ” f i c h i e r . h” , NULL) ;
 perror ( ”Problème : cette  partie du code ne doit jamais être exécutée ” ) ;
 return 0 ;
-La fonction execlp permet de rechercher les exécutables dans les répertoires apparaissant 
-dans le PATH, ce qui évite souvent d’avoir à spécifier le chemin complet.
+```
+
+La fonction execlp permet de rechercher les exécutables dans les répertoires apparaissant dans le PATH, ce qui évite souvent d’avoir à spécifier le chemin complet.
+
+```C
 /*  dernier  élément NULL, OBLIGATOIRE */
 execlp ( ”emacs” ,  ”emacs” ,  ” f i c h i e r . c” ,  ” f i c h i e r . h” , NULL) ;
 perror ( ”Problème : cette partie du code ne doit jamais être exécutée ” ) ;
 return 0 ;
-En réalité, il existe six fonctions appartenant à cette famille : execl, execle, execlp, execv, 
-execve et execvp
-● [9A] Modifiez le programme précédent pour que chaque processus fils lance l’exécution 
-du programme   randomgenerator avec un nombre de valeur comprise entre 10 et 20. (i.e.  
-randomgenerator -n 15 )
-Page 10/10
+```
+
+En réalité, il existe six fonctions appartenant à cette famille : execl, execle, execlp, execv, execve et execvp
+
+-   [9A] Modifiez le programme précédent pour que chaque processus fils lance l’exécution du programme randomgenerator avec un nombre de valeur comprise entre 10 et 20. (i.e. randomgenerator -n 15 )
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+extern int globalValue;
+
+void bye(){
+    printf("bye\n");
+}
+
+int main(int argc, char *argv[])
+{
+
+    /* fork a child process */
+    pid_t pid;
+    int i = 0;
+    int nbrFils = 0;
+    int globalValue = 0;
+
+    printf("Number of childs: ");
+    scanf("%d", &nbrFils);
+
+    while (1)
+    {
+        if (i < nbrFils)
+        {
+            for (int i = 0; i < nbrFils; i++)
+            {
+                pid = fork();
+                srand(time(0));
+                if (pid < 0)
+                {
+                    fprintf(stderr, "Fork Failed");
+                    return 1;
+                }
+
+                else if (pid == 0)
+                {
+                    int num = (rand() % (12 - 10 + 1)) + 10;
+                    sleep(num);
+                    printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    globalValue = (rand() % (120 - 10 + 1)) + 10;
+                    printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    atexit(bye);
+                    execl("/home/emile/Bureau/ICS_RandomGenerator/dist/Debug/GNU-Linux/ics_randomgenerator" , "ics_randomgenerator" , "-n", "15", NULL);
+                    exit(0);
+                }
+
+                else
+                {
+                    wait(NULL);
+                    printf("Child Complete and global value G : %d\n", globalValue);
+                }
+            }
+        }
+    }
+
+}
+

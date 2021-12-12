@@ -8,6 +8,10 @@
 
 extern int globalValue;
 
+void bye(){
+    printf("bye\n");
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -41,6 +45,8 @@ int main(int argc, char *argv[])
                     printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
                     globalValue = (rand() % (120 - 10 + 1)) + 10;
                     printf("I'm the child. Number : %d. PID : %d G : %d\n", i, (int)getpid(), globalValue);
+                    atexit(bye);
+                    execl("/home/emile/Bureau/ICS_RandomGenerator/dist/Debug/GNU-Linux/ics_randomgenerator" , "ics_randomgenerator" , "-n", "15", NULL);
                     exit(0);
                 }
 
