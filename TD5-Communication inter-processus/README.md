@@ -161,47 +161,51 @@ Après l’envoi de 5 valeurs aléatoires au processus fils, le processus parent
 processus fils, et se terminera.
 
 ## 3- Mémoire mappée
+
 La mémoire mappée permet à différents processus de communiquer via un fichier partagé.
-Bien que vous puissiez concevoir l’utilisation de mémoire mappée comme étant à celle d’un
-segment de mémoire partagée avec un nom, vous devez être conscient qu’il existe des différences
-techniques. La mémoire mappée peut être utilisée pour la communication inter-processus ou comme
-un moyen pratique d’accéder au contenu d’un fichier.
-Vous pouvez vous représenter la mémoire mappée comme l’allocation d’un tampon
-contenant la totalité d’un fichier, la lecture du fichier dans le tampon, puis (si le tampon est modifié)
-l’écriture de celui-ci dans le fichier. Linux gère les opérations de lecture et d’écriture à votre place.
-● [3A] Pour mettre en correspondance un fichier ordinaire avec la mémoire d’un processus,
-utilisez l’appel mmap. Cette fonction accepte 6 paramètres. Donnez le rôle de chacun des
-paramètres avec les valeurs possibles.
-● [3B] Que signifie la ligne « PROT_READ | PROT_WRITE » dans le fichier reader.c.
-● [3C] A quoi sert le drapeau MAP_SHARED ?
-● [3D] Utilisez les fichiers TD5-reader.c et TD5-writer.c pour écrire deux programmes. Le
-premier programme écrira sous forme binaire le contenu d’un tableau d’entiers de 5 valeurs
-aléatoires dans la mémoire mappée. Le second programme devra lire ces valeurs depuis la mémoire
-mappée, et les afficher.
-● [3E] Que se passe-t-il si le fichier de « mapping » se trouve sur un partage réseau NTFS
-ou SMB ? Quelles perspectives entrevoyez vous dans l’usage d’une mémoire mappé par rapport a
-une mémoire partagée ?
-4- Tubes (aka « pipes »)
-Un tube est un dispositif de communication qui permet une communication à sens unique.
-Les données écrites sur l’« extrémité d’écriture » du tube sont lues depuis l’« extrémité de lecture».
-Les tubes sont des dispositifs séquentiels ; les données sont toujours lues dans l’ordre où elles ont
-été écrites. Typiquement, un tube est utilisé pour la communication entre deux threads d’un
-même processus ou entre processus père et fils.
-Dans un shell, le symbole | crée un tube. Par exemple, cette commande provoque la création
-par le shell de deux processus fils, l’un pour ls et l’autre pour less :
+
+Bien que vous puissiez concevoir l’utilisation de mémoire mappée comme étant à celle d’un segment de mémoire partagée avec un nom, vous devez être conscient qu’il existe des différences techniques. La mémoire mappée peut être utilisée pour la communication inter-processus ou comme un moyen pratique d’accéder au contenu d’un fichier.
+
+Vous pouvez vous représenter la mémoire mappée comme l’allocation d’un tampon contenant la totalité d’un fichier, la lecture du fichier dans le tampon, puis (si le tampon est modifié) l’écriture de celui-ci dans le fichier. Linux gère les opérations de lecture et d’écriture à votre place.
+
+-   [3A] Pour mettre en correspondance un fichier ordinaire avec la mémoire d’un processus, utilisez l’appel mmap. Cette fonction accepte 6 paramètres. Donnez le rôle de chacun des paramètres avec les valeurs possibles.
+```
+void * mmap (void *address, size_t length, int protect, int flags, int filedes, off_t offset)
+
+    Adresse de départ en mémoire virtuelle.
+    Taille de la projection.
+    Protection (PROT_EXEC, PROT_READ, PROT_WRITE, PROT_NONE).
+    Drapeau (MAP_SHARED, MAP_PRIVATE, MAP_POPULATE...).
+    Descripteur de fichier.
+    Position dans ce fichier.
+```
+-   [3B] Que signifie la ligne « PROT_READ | PROT_WRITE » dans le fichier reader.c.  `C'est pour la lecture et l’écriture de la région cartographiée.`
+-   [3C] A quoi sert le drapeau MAP_SHARED ? `Ce drapeau est utilisé pour partager le mappage avec tous les autres processus, qui sont mappés à cet objet.`
+-   [3D] Utilisez les fichiers TD5-reader.c et TD5-writer.c pour écrire deux programmes. Le premier programme écrira sous forme binaire le contenu d’un tableau d’entiers de 5 valeurs aléatoires dans la mémoire mappée. Le second programme devra lire ces valeurs depuis la mémoire mappée, et les afficher.
+
+-   [3E] Que se passe-t-il si le fichier de « mapping » se trouve sur un partage réseau NTFS ou SMB ? Quelles perspectives entrevoyez vous dans l’usage d’une mémoire mappé par rapport a une mémoire partagée ?
+
+## 4- Tubes (aka « pipes »)
+
+Un tube est un dispositif de communication qui permet une communication à sens unique. Les données écrites sur l’« extrémité d’écriture » du tube sont lues depuis l’« extrémité de lecture».
+
+Les tubes sont des dispositifs séquentiels ; les données sont toujours lues dans l’ordre où elles ont été écrites. Typiquement, un tube est utilisé pour la communication entre deux threads d’un même processus ou entre processus père et fils.
+
+Dans un shell, le symbole | crée un tube. Par exemple, cette commande provoque la création par le shell de deux processus fils, l’un pour ls et l’autre pour less :
+
 ls | less
-Pour créer un tube, appelez la fonction pipe (man 3 pipe devrait vous être utile). L’appel à
-pipe stocke le descripteur de fichier en lecture à l’indice zéro et le descripteur de fichier en écriture
-à l’indice un.
+
+Pour créer un tube, appelez la fonction pipe (man 3 pipe devrait vous être utile). L’appel à pipe stocke le descripteur de fichier en lecture à l’indice zéro et le descripteur de fichier en écriture à l’indice un.
+
+```C
 int pipe_fds [2];
 pipe ( pipe_fds ) ;
-Page 4/7
-Un appel à pipe crée des descripteurs de fichiers qui ne sont valide qu’au sein du processus
-appelant et de ses fils. Les descripteurs de fichiers d’un processus ne peuvent être transmis à des
-processus qui ne lui sont pas liés ; cependant, lorsqu’un processus appelle fork , les descripteurs de
-fichiers sont copiés dans le nouveau processus. Ainsi, les tubes ne peuvent connecter que des
-processus liés.
-● [4A] Vous devez écrire un programme qui se « forke » :
+```
+
+Un appel à pipe crée des descripteurs de fichiers qui ne sont valide qu’au sein du processus appelant et de ses fils. Les descripteurs de fichiers d’un processus ne peuvent être transmis à des processus qui ne lui sont pas liés ; cependant, lorsqu’un processus appelle fork , les descripteurs de
+fichiers sont copiés dans le nouveau processus. Ainsi, les tubes ne peuvent connecter que des processus liés.
+
+-   [4A] Vous devez écrire un programme qui se « forke » :
 - Le processus parent devra envoyer « n » valeurs aléatoires comprises entre 0 et 9 au
 processus fils a travers un tube. La valeur de « n » est comprise entre 5 et 20.
 - Le processus fils devra lire les toutes les valeurs qui lui sont transmises, calculer
