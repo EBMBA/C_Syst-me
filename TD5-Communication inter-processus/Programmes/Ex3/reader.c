@@ -10,17 +10,22 @@
 int reader(char *file) {
     int fd;
     void * file_memory;
-    int integer;
+    int integer[5];
 
     /* Ouvre le fichier */
     fd = open(file, O_RDWR, S_IRUSR | S_IWUSR);
     /* Met en co rr es pon da nce le fichier et la mémoire */
     file_memory = mmap(0, FILE_LENGTH, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
-    /* Lit l’entier , l’affiche et le multiplie par deux. */
-    sscanf(file_memory, " %d ", &integer);
-    printf(" valeur : %d \n ", integer);
-    sprintf((char *) file_memory, " %d \n ", 2 * integer);
+    /* Lit l’entier , l’affiche  */
+    sscanf(file_memory, " %d %d %d %d %d ", &integer[0],&integer[1], &integer[2],&integer[3],&integer[4]);
+    for (int i = 0; i < 5; i++)
+    {
+        printf(" valeur : %d \n ", integer[i]);
+    }
+    
+    
+    //sprintf((char *) file_memory, " %d \n ", integer);
     /* Libère la mémoire ( facultatif car le programme se termine ) . */
     munmap(file_memory, FILE_LENGTH);
     return 0;
@@ -28,6 +33,6 @@ int reader(char *file) {
 
 int main(int argc, char const *argv[])
 {
-    reader("/home/student/Documents/C_Syst-me/TD5-Communication inter-processus/Programmes/Ex3/test.txt");
+    reader("./test.txt");
     return 0;
 }

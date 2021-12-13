@@ -30,7 +30,7 @@ int writer(char *file) {
     file_memory = mmap(0, FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     /* Ecrit un entier aléatoire dans la zone mise en correspondance . */
-    sprintf((char *) file_memory, " %d \n ", random_range(-100, 100));
+    sprintf((char *) file_memory, " %d %d %d %d %d \n ", random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100));
     /* Libère la mémoire ( facultatif car le programme se termine ) . */
     munmap(file_memory, FILE_LENGTH);
     return EXIT_SUCCESS;
@@ -38,6 +38,6 @@ int writer(char *file) {
 
 int main(int argc, char const *argv[])
 {
-    writer("/home/student/Documents/C_Syst-me/TD5-Communication inter-processus/Programmes/Ex3/test.txt");
+    writer("./test.txt");
     return 0;
 }

@@ -181,7 +181,7 @@ void * mmap (void *address, size_t length, int protect, int flags, int filedes, 
 ```
 -   [3B] Que signifie la ligne « PROT_READ | PROT_WRITE » dans le fichier reader.c.  `C'est pour la lecture et l’écriture de la région cartographiée.`
 -   [3C] A quoi sert le drapeau MAP_SHARED ? `Ce drapeau est utilisé pour partager le mappage avec tous les autres processus, qui sont mappés à cet objet.`
--   [3D] Utilisez les fichiers TD5-reader.c et TD5-writer.c pour écrire deux programmes. Le premier programme écrira sous forme binaire le contenu d’un tableau d’entiers de 5 valeurs aléatoires dans la mémoire mappée. Le second programme devra lire ces valeurs depuis la mémoire mappée, et les afficher.
+-   [3D] Utilisez les fichiers TD5-reader.c et TD5-writer.c pour écrire deux programmes. Le premier programme écrira sous forme binaire le contenu d’un tableau d’entiers de 5 valeurs aléatoires dans la mémoire mappée. Le second programme devra lire ces valeurs depuis la mémoire mappée, et les afficher. `Voir Programmes/Ex3/writer.c et reader.c`
 
 -   [3E] Que se passe-t-il si le fichier de « mapping » se trouve sur un partage réseau NTFS ou SMB ? Quelles perspectives entrevoyez vous dans l’usage d’une mémoire mappé par rapport a une mémoire partagée ?
 
@@ -206,21 +206,89 @@ Un appel à pipe crée des descripteurs de fichiers qui ne sont valide qu’au s
 fichiers sont copiés dans le nouveau processus. Ainsi, les tubes ne peuvent connecter que des processus liés.
 
 -   [4A] Vous devez écrire un programme qui se « forke » :
-- Le processus parent devra envoyer « n » valeurs aléatoires comprises entre 0 et 9 au
-processus fils a travers un tube. La valeur de « n » est comprise entre 5 et 20.
-- Le processus fils devra lire les toutes les valeurs qui lui sont transmises, calculer
-leurs somme et quitter.
--Le processus parent doit se terminer lorsque le processus fils a fini sa tache.
-● [4B] Quelle est le rôle/intérêt de la commande dup2 ?
-● [4C] A quoi servent les commandes popen et pclose ?
-5- Tubes nommés (FIFO, aka « named pipe »)
-Une file premièr entré, premier sorti (first-in, first-out, FIFO) est un tube qui dispose d’un
-nom dans le système de fichiers. Tout processus peut ouvrir ou fermer la FIFO ; les processus
-raccordés aux extrémités du tube n’ont pas à avoir de lien de parenté. Les FIFO sont également
-appelés canaux nommés (named pipe).
-Vous pouvez créer une FIFO via la commande mkfifo . Indiquez l’emplacement où elle doit
-être créée sur la ligne de commande. Par exemple, créez une FIFO dans /tmp/fifo en invoquant ces
-commandes : mkfifo
+
+Le processus parent devra envoyer « n » valeurs aléatoires comprises entre 0 et 9 au processus fils a travers un tube. La valeur de « n » est comprise entre 5 et 20.
+
+Le processus fils devra lire toutes les valeurs qui lui sont transmises, calculer leurs somme et quitter.
+
+Le processus parent doit se terminer lorsque le processus fils a fini sa tache.
+
+```C
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#include <signal.h>
+
+void childProcess(int p[2], char inbuf[1])
+{
+    int somme = 0;
+    while (1)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            /* read pipe */
+            read(p[0], inbuf, 1);
+            printf("%s\n", inbuf);
+            somme = somme + atoi(inbuf);
+        }
+        printf("Somme : %d\n", somme);
+    }
+}
+
+/* Renvoie un nombre aléatoire compris dans l’intervalle [ low , high ].*/
+int random_range(unsigned const low, unsigned const high)
+{
+    unsigned const range = high - low + 1;
+    return low + (int)(((double)range) * rand() / (RAND_MAX + 1.0));
+}
+
+int main()
+{
+    char *inbuf = malloc(sizeof(int));
+    int p[2], valeur, n;
+    pid_t pid;
+
+    if (pipe(p) < 0)
+        exit(1);
+
+    pid = fork();
+
+    if (pid == 0)
+    {
+        childProcess(p, inbuf);
+    }
+
+    /* continued */
+    /* write pipe */
+    // Initialisation du temps à 0 pour les valeurs aléatoires
+    srand(time(0));
+    n = random_range(5, 20);
+
+    for (int i = 0; i < n; i++)
+    {
+        sprintf(inbuf, "%d", random_range(0, 9));
+        write(p[1], inbuf, 1);
+    }
+
+    // Arrête le processus du fils
+    wait(NULL);
+
+    return 0;
+}
+```
+
+-   [4B] Quelle est le rôle/intérêt de la commande dup2 ?
+-   [4C] A quoi servent les commandes popen et pclose ?
+
+## 5- Tubes nommés (FIFO, aka « named pipe »)
+
+Une file premièr entré, premier sorti (first-in, first-out, FIFO) est un tube qui dispose d’un nom dans le système de fichiers. Tout processus peut ouvrir ou fermer la FIFO ; les processus raccordés aux extrémités du tube n’ont pas à avoir de lien de parenté. Les FIFO sont également appelés canaux nommés (named pipe).
+
+Vous pouvez créer une FIFO via la commande mkfifo . Indiquez l’emplacement où elle doit être créée sur la ligne de commande. Par exemple, créez une FIFO dans /tmp/fifo en invoquant ces commandes : mkfifo
 Par exemple sur un premier terminal :
 mkfifo /tmp/fifo
 cat < /tmp/fifo
@@ -240,7 +308,8 @@ Exemple de syntaxe : send_rand mypipe -n 30 qui enverra 30 valeurs aléatoires d
 nommé « mypipe »
 ● [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube,
 et affichera la moyenne des valeurs avant de quitter.
-6- Socket
+
+## 6- Socket
 Un socket est un dispositif de communication bidirectionnel pouvant être utilisé pour
 communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur
 d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets
