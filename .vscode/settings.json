@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.c": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "cstdlib": "c"
     }
 }

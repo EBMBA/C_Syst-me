@@ -146,16 +146,13 @@ sémaphores.
 La commande ipcs affichera la liste des segments mémoire en cours d’utilisation. Nous n’aborderons pas la notion de sémaphore, mais il est possible d’utiliser la mémoire partagée pour qu’un processus père et sont fils échangent des données. La synchronisation pourra se
 faire via les signaux.
 
--   [2A] En vous basant le fichier TD5-shared_memory.c et en réutilisant le code du TD sur
-les processus (ou celui de l’exercice précédent) vous devez :
+-   [2A] En vous basant le fichier TD5-shared_memory.c et en réutilisant le code du TD sur les processus (ou celui de l’exercice précédent) vous devez :
 
 Ecrire un programme qui se « forke » (un seul processus fils)
 
-Le processus parent devra afficher un nombre aléatoire compris entre 0 et 100 et l’écrire
-dans la mémoire partagée.
+Le processus parent devra afficher un nombre aléatoire compris entre 0 et 100 et l’écrire dans la mémoire partagée.
 
-Après-quoi le processus parent devra envoyer un signal SIGUSR1 au processus fils pour lui
-signaler que des données sont disponibles dans la mémoire partagée.
+Après-quoi le processus parent devra envoyer un signal SIGUSR1 au processus fils pour lui signaler que des données sont disponibles dans la mémoire partagée.
 
 Le processus fils devra lire les données disponibles et afficher son pid en même temps que
 les données lues.
