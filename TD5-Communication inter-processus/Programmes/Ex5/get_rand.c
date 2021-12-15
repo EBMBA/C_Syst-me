@@ -9,19 +9,12 @@
 #include <string.h>
 #define FILE_LENGTH 0x100
 
-/* Renvoie un nombre aléatoire compris dans l’intervalle [ low , high ].*/
-int random_range(unsigned const low, unsigned const high) {
-    unsigned const range = high - low + 1;
-    return low + (int) (((double) range) * rand() / (RAND_MAX + 1.0));
-}
 
 int main(int argc, char const *argv[])
 {
-    /* Initialise le générateur de nombres aléatoires */
-    srand(time(NULL));
     const char separator[2] = ";";
     char *token;
-    int tokenI; 
+    int *tokenI = malloc(80 * sizeof(int)), i = 0, somme = 0, moyenne = 0; 
     int fd;
 
     // FIFO file path
@@ -35,7 +28,7 @@ int main(int argc, char const *argv[])
     // mkfifo(<pathname>, <permission>)
     mkfifo(myfifo, 0666);
 
-    char arr1[80], arr2[1];
+    char arr1[80] = {"0"};
 
     // Open FIFO for Read only
     fd = open(myfifo, O_RDONLY);
@@ -43,8 +36,25 @@ int main(int argc, char const *argv[])
     // Read from FIFO
     read(fd, arr1, sizeof(arr1));
 
+    printf(" %s\n", arr1);
+
+    // get the first token
+    token = strtok(arr1, separator);
+
     // Print the read message
-    printf("User2: %s\n", arr1);
+    while (token != NULL )
+    {
+        printf(" %s\n", token);
+        somme += atoi(token);
+        token = strtok(NULL, separator);
+        i++;
+    }
+
+
+    moyenne = somme / i;
+    
+
+    printf("Moyenne: %d\n", moyenne);
     close(fd);    
 
     //printf("%s \n", argv[3]);

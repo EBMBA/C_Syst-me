@@ -32,21 +32,16 @@ int main(int argc, char const *argv[])
     // mkfifo(<pathname>, <permission>)
     mkfifo(myfifo, 0666);
 
-    char arr1[1], arr2[1];
+    // Open FIFO for write only
+    fd = fopen(myfifo, "w");
 
     for (size_t i = 0; i < atoi(argv[3]); i++)
     {
-          // Open FIFO for write only
-        fd = fopen(myfifo, "w");
-
         fprintf(fd, "%d;",random_range(-100, 100));
-
-        fclose(fd);
     }
     
-
+    fclose(fd);
     //printf("%s \n", argv[3]);
-
 
     return 0;
 }
