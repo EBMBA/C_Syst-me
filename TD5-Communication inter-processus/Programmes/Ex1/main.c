@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     }
     for (int n = 0; n < 30; n++)
     {
-        int num = rand() % 4;
+        int num = rand() % 5;
         kill(pid[num], SIGUSR1);
         sleep(1);
     }
