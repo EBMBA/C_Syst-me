@@ -2,6 +2,8 @@
     "files.associations": {
         "*.c": "c",
         "unistd.h": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "mman.h": "c",
+        "types.h": "c"
     }
 }

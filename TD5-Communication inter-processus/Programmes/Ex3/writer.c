@@ -16,7 +16,9 @@ int random_range(unsigned const low, unsigned const high) {
 int writer(char *file) {
 
     int fd;
-    void * file_memory;
+    int * file_memory;
+    int tab[5];
+    const size_t n = sizeof tab / sizeof tab[0];
 
     /* Initialise le générateur de nombres aléatoires */
     srand(time(NULL));
@@ -30,7 +32,14 @@ int writer(char *file) {
     file_memory = mmap(0, FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     /* Ecrit un entier aléatoire dans la zone mise en correspondance . */
-    sprintf((char *) file_memory, " %d %d %d %d %d \n ", random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100));
+
+    for (int i = 0; i < 5; i++)
+    {
+        file_memory[i] = random_range(-100, 100);
+    }
+    
+
+    //sprintf((char *) file_memory, " %d %d %d %d %d \n ", random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100));
     /* Libère la mémoire ( facultatif car le programme se termine ) . */
     munmap(file_memory, FILE_LENGTH);
     return EXIT_SUCCESS;
@@ -38,6 +47,6 @@ int writer(char *file) {
 
 int main(int argc, char const *argv[])
 {
-    writer("./test.txt");
+    writer("./test.bin");
     return 0;
 }

@@ -9,8 +9,7 @@
 
 int reader(char *file) {
     int fd;
-    void * file_memory;
-    int integer[5];
+    int * file_memory;
 
     /* Ouvre le fichier */
     fd = open(file, O_RDWR, S_IRUSR | S_IWUSR);
@@ -18,10 +17,9 @@ int reader(char *file) {
     file_memory = mmap(0, FILE_LENGTH, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     /* Lit l’entier , l’affiche  */
-    sscanf(file_memory, " %d %d %d %d %d ", &integer[0],&integer[1], &integer[2],&integer[3],&integer[4]);
     for (int i = 0; i < 5; i++)
     {
-        printf(" valeur : %d \n ", integer[i]);
+        printf(" valeur : %d \n ", file_memory[i]);
     }
     
     
@@ -33,6 +31,6 @@ int reader(char *file) {
 
 int main(int argc, char const *argv[])
 {
-    reader("./test.txt");
+    reader("./test.bin");
     return 0;
 }

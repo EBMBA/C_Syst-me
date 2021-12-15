@@ -281,32 +281,40 @@ int main()
 }
 ```
 
--   [4B] Quelle est le rôle/intérêt de la commande dup2 ?
+-   [4B] Quelle est le rôle/intérêt de la commande dup2 ? ``
 -   [4C] A quoi servent les commandes popen et pclose ?
 
 ## 5- Tubes nommés (FIFO, aka « named pipe »)
 
 Une file premièr entré, premier sorti (first-in, first-out, FIFO) est un tube qui dispose d’un nom dans le système de fichiers. Tout processus peut ouvrir ou fermer la FIFO ; les processus raccordés aux extrémités du tube n’ont pas à avoir de lien de parenté. Les FIFO sont également appelés canaux nommés (named pipe).
 
-Vous pouvez créer une FIFO via la commande mkfifo . Indiquez l’emplacement où elle doit être créée sur la ligne de commande. Par exemple, créez une FIFO dans /tmp/fifo en invoquant ces commandes : mkfifo
+Vous pouvez créer une FIFO via la commande `mkfifo` . Indiquez l’emplacement où elle doit être créée sur la ligne de commande. Par exemple, créez une FIFO dans /tmp/fifo en invoquant ces commandes : `mkfifo`
+
 Par exemple sur un premier terminal :
+
+```bash
 mkfifo /tmp/fifo
 cat < /tmp/fifo
+```
+
 Dans un second terminal :
-echo  "Hello world"  > /tmp/fifo
+`echo  "Hello world"  > /tmp/fifo`
+
 Pour créer une FIFO par programmation, utilisez la fonction mkfifo (man 3 mkfifo ?).
+
 L’accès à une FIFO se fait de la même façon que pour un fichier ordinaire. Pour communiquer via
 une FIFO, un programme doit l’ouvrir en écriture. Il est possible d’utiliser des fonction d’E/S de
-bas niveau ( open , write , read , close , etc.) ou des fonctions d’E/S de la bibliothèque C ( fopen,
-fprintf, fscanf, fclose, etc.).
-Page 5/7
-● [5A] Vous devez écrire un premier programme appelé send_rand qui écrit « n » valeurs
+bas niveau ( open , write , read , close , etc.) ou des fonctions d’E/S de la bibliothèque C ( fopen, fprintf, fscanf, fclose, etc.).
+
+-   [5A] Vous devez écrire un premier programme appelé send_rand qui écrit « n » valeurs
 aléatoires dans un tube nommé. Ce programme prendra en argument le nom du tube, et l'option -n
 qui sera suivi du nombre de valeurs aléatoires a envoyer dans le tube. Ce programme devra créer le
 tube dans le répertoire /tmp si celui-ci n'existe pas déjà.
+
 Exemple de syntaxe : send_rand mypipe -n 30 qui enverra 30 valeurs aléatoires dans le tube
 nommé « mypipe »
-● [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube,
+
+-   [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube,
 et affichera la moyenne des valeurs avant de quitter.
 
 ## 6- Socket

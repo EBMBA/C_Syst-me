@@ -57,30 +57,6 @@ int main(int argc, char *argv[])
                 }
             }
         }
-
-        /*for (int i = 0; i < nbrFils; i++)
-        {
-            pid = fork();
-            if (pid < 0)
-            {
-                fprintf(stderr, "Fork Failed");
-                return 1;
-            }
-
-            else if (pid == 0)
-            {
-                int num = (rand() % (120 - 10 + 1)) + 10;
-                sleep(num);
-                printf("I'm the child. Number : %d. PID : %d \n", i, (int)getpid());
-                exit(0);
-            }
-
-            else
-            {
-                wait(NULL);
-                printf("Child Complete \n");
-            }
-        }*/
     }
 
 }
