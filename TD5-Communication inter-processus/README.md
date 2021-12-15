@@ -160,6 +160,98 @@ les données lues.
 Après l’envoi de 5 valeurs aléatoires au processus fils, le processus parent mettra fin au
 processus fils, et se terminera.
 
+```C
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/random.h>
+#include <signal.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <time.h>
+
+struct sigaction action;
+int randomNumber;
+int segment_id;
+char *shared_memory;
+
+void handler(int signum)
+{
+
+    printf("-----------------------FILS-------------------- \n");
+    /* Réattache le segment de mémoire partagée à une adresse différente . */
+    shared_memory = (char *)shmat(segment_id, (void *)0x5000000, 0);
+    printf("FILS:  mémoire partagée réattachée à l ’ adresse % p \n ", shared_memory);
+    /* Affiche la chaîne de la mémoire partagée . */
+    printf(" % s pid: %d\n ", shared_memory, getpid());
+    /* Détache le segment de mémoire partagée . */
+    shmdt(shared_memory);
+}
+
+int processChild()
+{
+    // Attends le signal
+    while (1)
+    {
+        sleep(1);
+    }
+}
+
+int main()
+{
+    struct shmid_ds shmbuffer;
+    int segment_size;
+    const int shared_segment_size = 0x400;
+    /* Alloue le segment de mémoire partagée . */
+    segment_id = shmget(IPC_PRIVATE, shared_segment_size,
+                        IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+    /* Attache le segment de mémoire partagée . */
+    shared_memory = (char *)shmat(segment_id, 0, 0);
+    printf("----------------------PARENTS------------------------\n");
+    printf(" PARENTS: mémoire partagée attachée à l ’ adresse % p \n ", shared_memory);
+    /* Détermine la taille du segment . */
+    shmctl(segment_id, IPC_STAT, &shmbuffer);
+    segment_size = shmbuffer.shm_segsz;
+    printf(" taille du segment : % d \n ", segment_size);
+
+    // Fais le lien entre l'action et le signal 
+    action.sa_handler = handler;
+    sigaction(SIGUSR1, &action, NULL);
+
+    // Création du fils 
+    pid_t pid = fork();
+
+    if (pid == 0) // Action à faire dans le fils
+    {
+        processChild();
+    }
+
+    // Initialisation du temps à 0 pour les valeurs aléatoires
+    srand(time(0));
+
+    // Boucle de création et écriture des n nombres aléatoires
+    for (int i = 0; i < 5; i++)
+    {
+        printf("----------------------PARENTS------------------------\n");
+        /* Réattache le segment de mémoire partagée à une adresse différente . */
+        shared_memory = (char *)shmat(segment_id, (void *)0x5000000, 0);
+        // Génération du nombre aléatoire
+        randomNumber = random() % 100 + 1;
+        /* Écrit une chaîne dans le segment de mémoire partagée . */
+        sprintf(shared_memory, "%d", randomNumber);
+        /* Détache le segment de mémoire partagée . */
+        shmdt(shared_memory);
+        //envoie du signale au fils
+        kill(getpid(), SIGUSR1);
+    }
+
+    // Libère la mémoire 
+    shmctl(segment_id, IPC_RMID, 0);
+    // Arrête le processus du fils
+    kill(pid, SIGINT);
+
+    return (0);
+}
+```
 ## 3- Mémoire mappée
 
 La mémoire mappée permet à différents processus de communiquer via un fichier partagé.
@@ -457,30 +549,24 @@ int main(int argc, char const *argv[])
 
 ## 6- Socket
 
-Un socket est un dispositif de communication bidirectionnel pouvant être utilisé pour
-communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets locaux, que vous avez entrevu dans le TD sur MySQL. Pour les sockets réseaux (PF_INET), vous êtes invité a retourner voir le code concernant les projets du module DEV-INF-2.
+Un socket est un dispositif de communication bidirectionnel pouvant être utilisé pour communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets locaux, que vous avez entrevu dans le TD sur MySQL. Pour les sockets réseaux (PF_INET), vous êtes invité a retourner voir le code concernant les projets du module DEV-INF-2.
 
 Les sockets mettant en relation des processus situés sur le même ordinateur peuvent utiliser l’espace de nommage local représenté par les constantes PF_LOCAL et PF_UNIX. 
 
 Ils sont appelés sockets locaux ou sockets de domaine UNIX. Leur adresse de socket, un nom de fichier, n’est utilisée que lors de la création de connexions.
 
-Le nom du socket est spécifié dans une struct sockaddr_un . Vous devez positionner le
-champ sun_family à AF_LOCAL, qui représente un espace de nommage local. Le champ sun_path
-spécifie le nom de fichier à utiliser et peut faire au plus 108 octets de long. La longueur réelle de la struct sockaddr_un doit être calculée en utilisant la macro SUN_LEN .
+Le nom du socket est spécifié dans une struct sockaddr_un . Vous devez positionner le champ sun_family à AF_LOCAL, qui représente un espace de nommage local. Le champ sun_path spécifie le nom de fichier à utiliser et peut faire au plus 108 octets de long. La longueur réelle de la struct sockaddr_un doit être calculée en utilisant la macro SUN_LEN .
 
-Tout nom de fichier peut être utilisé, mais le processus doit avoir des autorisations
-d’écriture sur le répertoire qui permettent l’ajout de fichiers. Pour se connecter à un socket, un processus doit avoir des droits en lecture sur le fichier. Même si différents ordinateurs peuvent partager le même système de fichier, seuls des processus s’exécutant sur le même ordinateur peuvent communiquer via les sockets de l’espace de nommage local.
+Tout nom de fichier peut être utilisé, mais le processus doit avoir des autorisations d’écriture sur le répertoire qui permettent l’ajout de fichiers. Pour se connecter à un socket, un processus doit avoir des droits en lecture sur le fichier. Même si différents ordinateurs peuvent partager le même système de fichier, seuls des processus s’exécutant sur le même ordinateur peuvent communiquer via les sockets de l’espace de nommage local.
 
 Le seul protocole permis pour l’espace de nommage local est 0.
 
 Comme il est stocké dans un système de fichiers, un socket local est affiché comme un
 fichier. Avec le type s (srwxrwx—x).
 
-- [6A] En utilisant les sockets UNIX, vous devez écrire un programme client qui enverra
-une valeur numérique unique a un programme serveur via les sockets UNIX. Ce programme sera exécuté simultanément 2 fois. Les 2 processus contacteront le même serveur et chacun devra envoyer une valeur a un processus serveur via les sockets.
+- [6A] En utilisant les sockets UNIX, vous devez écrire un programme client qui enverra une valeur numérique unique a un programme serveur via les sockets UNIX. Ce programme sera exécuté simultanément 2 fois. Les 2 processus contacteront le même serveur et chacun devra envoyer une valeur a un processus serveur via les sockets.
 
-- [6B] Le processus serveur attendra d’avoir deux valeurs numériques. Il devra alors
-calculer la somme des deux valeurs, l’afficher et aussi la retourner aux processus clients, qui a leurs tours, afficheront cette somme.
+- [6B] Le processus serveur attendra d’avoir deux valeurs numériques. Il devra alors calculer la somme des deux valeurs, l’afficher et aussi la retourner aux processus clients, qui a leurs tours, afficheront cette somme.
 
 
 Pour approfondir d’autres approches ;
