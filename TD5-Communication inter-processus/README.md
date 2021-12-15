@@ -307,48 +307,183 @@ une FIFO, un programme doit l’ouvrir en écriture. Il est possible d’utilise
 bas niveau ( open , write , read , close , etc.) ou des fonctions d’E/S de la bibliothèque C ( fopen, fprintf, fscanf, fclose, etc.).
 
 -   [5A] Vous devez écrire un premier programme appelé send_rand qui écrit « n » valeurs
-aléatoires dans un tube nommé. Ce programme prendra en argument le nom du tube, et l'option -n
-qui sera suivi du nombre de valeurs aléatoires a envoyer dans le tube. Ce programme devra créer le
-tube dans le répertoire /tmp si celui-ci n'existe pas déjà.
+aléatoires dans un tube nommé. Ce programme prendra en argument le nom du tube, et l'option -n qui sera suivi du nombre de valeurs aléatoires a envoyer dans le tube. Ce programme devra créer le tube dans le répertoire /tmp si celui-ci n'existe pas déjà.
 
-Exemple de syntaxe : send_rand mypipe -n 30 qui enverra 30 valeurs aléatoires dans le tube
-nommé « mypipe »
+Exemple de syntaxe : send_rand mypipe -n 30 qui enverra 30 valeurs aléatoires dans le tube nommé « mypipe »
 
--   [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube,
-et affichera la moyenne des valeurs avant de quitter.
+```C
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <string.h>
+#define FILE_LENGTH 0x100
+
+/* Renvoie un nombre aléatoire compris dans l’intervalle [ low , high ].*/
+int random_range(unsigned const low, unsigned const high) {
+    unsigned const range = high - low + 1;
+    return low + (int) (((double) range) * rand() / (RAND_MAX + 1.0));
+}
+
+int main(int argc, char const *argv[])
+{
+    /* Initialise le générateur de nombres aléatoires */
+    srand(time(NULL));
+    FILE *fd;
+    char opt;
+    bool errflag = false, i_isset = false, n_isset = false;
+    int n ;
+
+    // FIFO file path
+    char * myfifo = malloc(80*sizeof(char));
+    strcpy(myfifo, "/tmp/") ;
+    strcat(myfifo, argv[1]);
+    printf("Fichier : %s \n", myfifo);
+
+    // Gestion des arguments 
+    while ( (opt = getopt(argc, argv, "in:")) != -1 )
+    {
+        switch (opt)
+        {
+        case 'n':
+            if (!i_isset)
+            {
+                n = atoi(optarg);
+                n_isset = true;
+            } else {
+                errflag = true;
+            }
+            
+            break;
+        
+        default:
+            break;
+        }
+    }
+    
+
+
+    // Creating the named file(FIFO)
+    // mkfifo(<pathname>, <permission>)
+    mkfifo(myfifo, 0666);
+
+    // Open FIFO for write only
+    fd = fopen(myfifo, "w");
+
+    for (size_t i = 0; i < n; i++)
+    {
+        fprintf(fd, "%d;",random_range(0, 100));
+    }
+    
+    fclose(fd);
+    //printf("%s \n", argv[3]);
+
+    return 0;
+}
+```
+
+-   [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube, et affichera la moyenne des valeurs avant de quitter.
+```C
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <string.h>
+#define FILE_LENGTH 0x100
+
+
+int main(int argc, char const *argv[])
+{
+    const char separator[2] = ";";
+    char *token;
+    int *tokenI = malloc(80 * sizeof(int)), i = 0, somme = 0, moyenne = 0; 
+    int fd;
+
+    // FIFO file path
+    char * myfifo = malloc(80*sizeof(char));
+    strcpy(myfifo, "/tmp/") ;
+    strcat(myfifo, argv[1]);
+    printf("Fichier : %s \n", myfifo);
+
+
+    // Creating the named file(FIFO)
+    // mkfifo(<pathname>, <permission>)
+    mkfifo(myfifo, 0666);
+
+    char arr1[80] = {"0"};
+
+    // Open FIFO for Read only
+    fd = open(myfifo, O_RDONLY);
+
+    // Read from FIFO
+    read(fd, arr1, sizeof(arr1));
+
+    printf(" %s\n", arr1);
+
+    // get the first token
+    token = strtok(arr1, separator);
+
+    // Print the read message
+    while (token != NULL )
+    {
+        printf(" %s\n", token);
+        somme += atoi(token);
+        token = strtok(NULL, separator);
+        i++;
+    }
+
+
+    moyenne = somme / i;
+    
+
+    printf("Moyenne: %d\n", moyenne);
+    close(fd);   
+
+
+    return 0;
+}
+
+```
+
 
 ## 6- Socket
+
 Un socket est un dispositif de communication bidirectionnel pouvant être utilisé pour
-communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur
-d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets
-locaux, que vous avez entrevu dans le TD sur MySQL. Pour les sockets réseaux (PF_INET), vous
-êtes invité a retourner voir le code concernant les projets du module DEV-INF-2.
-Les sockets mettant en relation des processus situés sur le même ordinateur peuvent utiliser
-l’espace de nommage local représenté par les constantes PF_LOCAL et PF_UNIX. Ils sont appelés
-sockets locaux ou sockets de domaine UNIX. Leur adresse de socket, un nom de fichier, n’est
-utilisée que lors de la création de connexions.
+communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets locaux, que vous avez entrevu dans le TD sur MySQL. Pour les sockets réseaux (PF_INET), vous êtes invité a retourner voir le code concernant les projets du module DEV-INF-2.
+
+Les sockets mettant en relation des processus situés sur le même ordinateur peuvent utiliser l’espace de nommage local représenté par les constantes PF_LOCAL et PF_UNIX. 
+
+Ils sont appelés sockets locaux ou sockets de domaine UNIX. Leur adresse de socket, un nom de fichier, n’est utilisée que lors de la création de connexions.
+
 Le nom du socket est spécifié dans une struct sockaddr_un . Vous devez positionner le
 champ sun_family à AF_LOCAL, qui représente un espace de nommage local. Le champ sun_path
-spécifie le nom de fichier à utiliser et peut faire au plus 108 octets de long. La longueur réelle de la
-struct sockaddr_un doit être calculée en utilisant la macro SUN_LEN .
+spécifie le nom de fichier à utiliser et peut faire au plus 108 octets de long. La longueur réelle de la struct sockaddr_un doit être calculée en utilisant la macro SUN_LEN .
+
 Tout nom de fichier peut être utilisé, mais le processus doit avoir des autorisations
-d’écriture sur le répertoire qui permettent l’ajout de fichiers. Pour se connecter à un socket, un
-processus doit avoir des droits en lecture sur le fichier. Même si différents ordinateurs peuvent
-partager le même système de fichier, seuls des processus s’exécutant sur le même ordinateur
-peuvent communiquer via les sockets de l’espace de nommage local.
+d’écriture sur le répertoire qui permettent l’ajout de fichiers. Pour se connecter à un socket, un processus doit avoir des droits en lecture sur le fichier. Même si différents ordinateurs peuvent partager le même système de fichier, seuls des processus s’exécutant sur le même ordinateur peuvent communiquer via les sockets de l’espace de nommage local.
+
 Le seul protocole permis pour l’espace de nommage local est 0.
+
 Comme il est stocké dans un système de fichiers, un socket local est affiché comme un
 fichier. Avec le type s (srwxrwx—x).
-● [6A] En utilisant les sockets UNIX, vous devez écrire un programme client qui enverra
-une valeur numérique unique a un programme serveur via les sockets UNIX. Ce programme sera
-exécuté simultanément 2 fois. Les 2 processus contacteront le même serveur et chacun devra
-envoyer une valeur a un processus serveur via les sockets.
-● [6B] Le processus serveur attendra d’avoir deux valeurs numériques. Il devra alors
-calculer la somme des deux valeurs, l’afficher et aussi la retourner aux processus clients, qui a leurs
-tours, afficheront cette somme.
-Page 6/7
+
+- [6A] En utilisant les sockets UNIX, vous devez écrire un programme client qui enverra
+une valeur numérique unique a un programme serveur via les sockets UNIX. Ce programme sera exécuté simultanément 2 fois. Les 2 processus contacteront le même serveur et chacun devra envoyer une valeur a un processus serveur via les sockets.
+
+- [6B] Le processus serveur attendra d’avoir deux valeurs numériques. Il devra alors
+calculer la somme des deux valeurs, l’afficher et aussi la retourner aux processus clients, qui a leurs tours, afficheront cette somme.
+
+
 Pour approfondir d’autres approches ;
-http://jean-luc.massat.perso.luminy.univ-amu.fr/ens/docs/IPC.html
-https://www.geeksforgeeks.org/ipc-using-message-queues/
-https://upsilon.cc/~zack/teaching/1415/progsyst/cours-10-sysv-ipc.pdf
-Page 7/7
+    http://jean-luc.massat.perso.luminy.univ-amu.fr/ens/docs/IPC.html
+    https://www.geeksforgeeks.org/ipc-using-message-queues/
+    https://upsilon.cc/~zack/teaching/1415/progsyst/cours-10-sysv-ipc.pdf

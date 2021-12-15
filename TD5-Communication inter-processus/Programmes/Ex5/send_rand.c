@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -20,12 +21,37 @@ int main(int argc, char const *argv[])
     /* Initialise le générateur de nombres aléatoires */
     srand(time(NULL));
     FILE *fd;
+    char opt;
+    bool errflag = false, i_isset = false, n_isset = false;
+    int n ;
 
     // FIFO file path
     char * myfifo = malloc(80*sizeof(char));
     strcpy(myfifo, "/tmp/") ;
     strcat(myfifo, argv[1]);
     printf("Fichier : %s \n", myfifo);
+
+    // Gestion des arguments 
+    while ( (opt = getopt(argc, argv, "in:")) != -1 )
+    {
+        switch (opt)
+        {
+        case 'n':
+            if (!i_isset)
+            {
+                n = atoi(optarg);
+                n_isset = true;
+            } else {
+                errflag = true;
+            }
+            
+            break;
+        
+        default:
+            break;
+        }
+    }
+    
 
 
     // Creating the named file(FIFO)
@@ -35,9 +61,9 @@ int main(int argc, char const *argv[])
     // Open FIFO for write only
     fd = fopen(myfifo, "w");
 
-    for (size_t i = 0; i < atoi(argv[3]); i++)
+    for (size_t i = 0; i < n; i++)
     {
-        fprintf(fd, "%d;",random_range(-100, 100));
+        fprintf(fd, "%d;",random_range(0, 100));
     }
     
     fclose(fd);
