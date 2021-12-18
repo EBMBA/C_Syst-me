@@ -1,24 +1,25 @@
-#define SOCKET_NAME "/tmp/test.socket"
-#define BUFFER_SIZE 12
-#define FILE_LENGTH 0x100
-
-/*
- * File server.c
+/**
+ * @file serveur.c
+ * @author METRAL EMILE 
+ * @brief Server receive from 2 clients numbers and sum them before send the result to the 2 clients
+ * @version 0.1
+ * @date 2021-12-18
+ * 
+ * @copyright Copyright (c) 2021
+ * 
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+#include "conf.h"
 
 void childrenProcess();
 int writer(char *file, int value);
 int reader(char *file);
+void handler(int signum);
+
+int result;
+int client1_socket;
+struct sigaction action;
+
+
 
 int main(int argc, char *argv[])
 {
@@ -27,10 +28,13 @@ int main(int argc, char *argv[])
     int ret;
     int connection_socket;
     int data_socket;
-    int result;
     char buffer[BUFFER_SIZE];
     int nbrConnections = -1;
-    pid_t pid[2];
+    pid_t pid;
+
+    // Fais le lien entre l'action et le signal
+    action.sa_handler = handler;
+    sigaction(SIGUSR1, &action, NULL);
 
     /* Create local socket. */
 
@@ -79,19 +83,11 @@ int main(int argc, char *argv[])
     while (1)
     {
         /* Wait for incoming connection. */
-        data_socket = accept(connection_socket, NULL, NULL);
-        result = 0;
-        if (data_socket == -1)
-        {
-            perror("accept");
-            exit(EXIT_FAILURE);
-        }
-        else
-        {
-            nbrConnections++;
-        }
+        client1_socket = accept(connection_socket, NULL, NULL);
 
-        pid[nbrConnections] = fork();
+        result = 0;
+
+        pid = fork();
 
         if (pid < 0)
         {
@@ -99,97 +95,52 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        else if (pid[0] == 0 && nbrConnections == 0)
+        else if (pid == 0)
         {
 
             /* Wait for next data packet. */
-            ret = read(data_socket, buffer, sizeof(buffer));
-            if (ret == -1)
-            {
-                perror("read");
-                exit(EXIT_FAILURE);
-            }
-
-            /* Ensure buffer is 0-terminated. */
-            buffer[sizeof(buffer) - 1] = 0;
-
-            /* Handle commands. */
-
-            if (!strncmp(buffer, "DOWN", sizeof(buffer)))
-            {
-                down_flag = 1;
-                break;
-            }
+            ret = read(client1_socket, buffer, sizeof(buffer));
 
             /* Add received summand. */
             result += atoi(buffer);
-            printf("Calculating results %d\n", nbrConnections);
-            writer("./tmpfile.bin", result)
+            printf("Child %d calculating results %d\n", (int) getpid(), result);
+            writer(CLIENT1_FILE, result);
         }
 
-        else if (pid[1] == 0 && nbrConnections == 1)
+        else
         {
+            // Close first client connection for the main process
+            close(client1_socket);
+
+            // Wait for second client connection
+            data_socket = accept(connection_socket, NULL, NULL);
+
             /* Wait for next data packet. */
             ret = read(data_socket, buffer, sizeof(buffer));
-            if (ret == -1)
-            {
-                perror("read");
-                exit(EXIT_FAILURE);
-            }
-
-            /* Ensure buffer is 0-terminated. */
-            buffer[sizeof(buffer) - 1] = 0;
-
-            /* Handle commands. */
-
-            if (!strncmp(buffer, "DOWN", sizeof(buffer)))
-            {
-                down_flag = 1;
-                break;
-            }
 
             /* Add received summand. */
             result += atoi(buffer);
-            result += reader("./tmpfile.bin");
-        }
+            result += reader(CLIENT1_FILE);
+            writer(RESULT_FILE, result);
 
-        nbrConnections++;
+            // Sending signal to child process
+            kill(pid, SIGUSR1);
+            sleep(1);
 
-        if (nbrConnections > 1)
-        {
-            printf("Result = %d\n", result);
+            /* Send result. */
+            sprintf(buffer, "%d", result);
+            ret = write(data_socket, buffer, sizeof(buffer));
+
+            /* Close socket. */
+            close(data_socket);
+
             break;
         }
     }
 
-    /* Send result. */
-
-    sprintf(buffer, "%d", result);
-    ret = write(data_socket, buffer, sizeof(buffer));
-    if (ret == -1)
-    {
-        perror("write");
-        exit(EXIT_FAILURE);
-    }
-
-    strcpy(buffer, "END");
-    ret = write(data_socket, buffer, strlen(buffer) + 1);
-    if (ret == -1)
-    {
-        perror("write");
-        exit(EXIT_FAILURE);
-    }
-
-    /* Close socket. */
-
-    close(data_socket);
-
-    /* Quit on DOWN command. */
-
-    if (down_flag)
-    {
-        break;
-    }
+    // Arrête le processus du fils
+    printf("Parent of child %d killing him\n", pid);
+    kill(pid, SIGINT);
 
     close(connection_socket);
 
@@ -208,9 +159,6 @@ int writer(char *file, int value)
     int tab[5];
     const size_t n = sizeof tab / sizeof tab[0];
 
-    /* Initialise le générateur de nombres aléatoires */
-    srand(time(NULL));
-
     /* Prépare un fichier suffisamment long pour contenir le nombre . */
     fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     lseek(fd, FILE_LENGTH + 1, SEEK_SET);
@@ -220,7 +168,6 @@ int writer(char *file, int value)
     file_memory = mmap(0, FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     /* Ecrit la valeur dans la zone mise en correspondance . */
-
     file_memory[0] = value;
 
     /* Libère la mémoire ( facultatif car le programme se termine ) . */
@@ -241,10 +188,23 @@ int reader(char *file)
     close(fd);
     /* Lit l’entier , l’affiche  */
 
-    value = file_memory[i];
+    value = file_memory[0];
 
     // sprintf((char *) file_memory, " %d \n ", integer);
     /* Libère la mémoire ( facultatif car le programme se termine ) . */
     munmap(file_memory, FILE_LENGTH);
     return value;
+}
+
+void handler(int signum)
+{
+    char buffer[BUFFER_SIZE];
+    result = reader(RESULT_FILE);
+
+    /* Send result. */
+    sprintf(buffer, "%d", result);
+    write(client1_socket, buffer, sizeof(buffer));
+
+    /* Close socket. */
+    close(client1_socket);
 }

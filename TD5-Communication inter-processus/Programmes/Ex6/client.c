@@ -1,17 +1,15 @@
-/*
- * File client.c
+/**
+ * @file client.c
+ * @author METRAL EMILE 
+ * @brief Client send number and receive a result 
+ * @version 0.1
+ * @date 2021-12-18
+ * 
+ * @copyright Copyright (c) 2021
+ * 
  */
+#include "conf.h"
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-
-#define SOCKET_NAME "/tmp/9Lq7BNBnBycd6nxydd.socket"
-#define BUFFER_SIZE 12
 
 int main(int argc, char *argv[])
 {
@@ -61,48 +59,11 @@ int main(int argc, char *argv[])
 
     /* Receive result. */
 
-    while (1)
-    {
-        ret = read(data_socket, buffer, sizeof(buffer));
-        if (ret == -1)
-        {
-            perror("read");
-            exit(EXIT_FAILURE);
-        }
+    ret = read(data_socket, buffer, sizeof(buffer));
 
-        if (!strncmp(buffer, "END", sizeof(buffer)))
-        {
-            break;
-        }
-
-        /* Ensure buffer is 0-terminated. */
-
-        buffer[sizeof(buffer) - 1] = 0;
-
-        printf("Result = %s\n", buffer);
-    }
-
-    /* Request result. */
-    /*     strcpy(buffer, "END");
-        ret = write(data_socket, buffer, strlen(buffer) + 1);
-        if (ret == -1)
-        {
-            perror("write");
-            exit(EXIT_FAILURE);
-        }
-     */
-    /* Receive result. */
-    /*
-        ret = read(data_socket, buffer, sizeof(buffer));
-        if (ret == -1)
-        {
-            perror("read");
-            exit(EXIT_FAILURE);
-        }
-     */
+    printf("Result = %s\n", buffer);
 
     /* Close socket. */
-
     close(data_socket);
 
     exit(EXIT_SUCCESS);
