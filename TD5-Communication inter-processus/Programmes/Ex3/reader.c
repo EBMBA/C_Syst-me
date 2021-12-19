@@ -13,7 +13,7 @@ int reader(char *file) {
 
     /* Ouvre le fichier */
     fd = open(file, O_RDWR, S_IRUSR | S_IWUSR);
-    /* Met en co rr es pon da nce le fichier et la mémoire */
+    /* Met en correspondance le fichier et la mémoire */
     file_memory = mmap(0, FILE_LENGTH, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     /* Lit l’entier , l’affiche  */

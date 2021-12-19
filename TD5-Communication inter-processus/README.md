@@ -8,6 +8,8 @@
 Ce TD aborde les différentes approches permettant a deux processus de communiquer et d’échanger
 des données.
 
+***METRAL Emile ICS3***
+
 ## 1. Signaux
 
 Les signaux sont des mécanismes permettant de manipuler et de communiquer avec des processus sous Linux. Le sujet des signaux est vaste ; nous traiterons ici quelques uns des signaux et techniques utilisés pour contrôler les processus.
@@ -44,7 +46,7 @@ Une fois les 30 secondes écoule, le processus parent doit envoyer un signal SIG
 processus enfants (Attention aux processus Zombie)
 
 
-```C
+```C++
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,16 +98,17 @@ int main(int argc, char *argv[])
     }
     for (int n = 0; n < 30; n++)
     {
-        int num = rand() % 4;
+        int num = rand() % 5;
         kill(pid[num], SIGUSR1);
         sleep(1);
     }
-    for (int p = 0; p < 4; p++)
+    for (int p = 0; p < 5; p++)
     {
         kill(pid[p], SIGINT);
     }
     
 }
+
 ```
 
 -   [1B] Il existe une fonction signal qui permet de faire presque la même chose que
@@ -160,7 +163,7 @@ les données lues.
 Après l’envoi de 5 valeurs aléatoires au processus fils, le processus parent mettra fin au
 processus fils, et se terminera.
 
-```C
+```C++
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/random.h>
@@ -261,7 +264,7 @@ Bien que vous puissiez concevoir l’utilisation de mémoire mappée comme étan
 Vous pouvez vous représenter la mémoire mappée comme l’allocation d’un tampon contenant la totalité d’un fichier, la lecture du fichier dans le tampon, puis (si le tampon est modifié) l’écriture de celui-ci dans le fichier. Linux gère les opérations de lecture et d’écriture à votre place.
 
 -   [3A] Pour mettre en correspondance un fichier ordinaire avec la mémoire d’un processus, utilisez l’appel mmap. Cette fonction accepte 6 paramètres. Donnez le rôle de chacun des paramètres avec les valeurs possibles.
-```
+```C++
 void * mmap (void *address, size_t length, int protect, int flags, int filedes, off_t offset)
 
     Adresse de départ en mémoire virtuelle.
@@ -275,6 +278,103 @@ void * mmap (void *address, size_t length, int protect, int flags, int filedes, 
 -   [3C] A quoi sert le drapeau MAP_SHARED ? `Ce drapeau est utilisé pour partager le mappage avec tous les autres processus, qui sont mappés à cet objet.`
 -   [3D] Utilisez les fichiers TD5-reader.c et TD5-writer.c pour écrire deux programmes. Le premier programme écrira sous forme binaire le contenu d’un tableau d’entiers de 5 valeurs aléatoires dans la mémoire mappée. Le second programme devra lire ces valeurs depuis la mémoire mappée, et les afficher. `Voir Programmes/Ex3/writer.c et reader.c`
 
+reader.c
+
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#define FILE_LENGTH 0x100
+
+int reader(char *file) {
+    int fd;
+    int * file_memory;
+
+    /* Ouvre le fichier */
+    fd = open(file, O_RDWR, S_IRUSR | S_IWUSR);
+    /* Met en correspondance le fichier et la mémoire */
+    file_memory = mmap(0, FILE_LENGTH, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    /* Lit l’entier , l’affiche  */
+    for (int i = 0; i < 5; i++)
+    {
+        printf(" valeur : %d \n ", file_memory[i]);
+    }
+    
+    
+    //sprintf((char *) file_memory, " %d \n ", integer);
+    /* Libère la mémoire ( facultatif car le programme se termine ) . */
+    munmap(file_memory, FILE_LENGTH);
+    return 0;
+}
+
+int main(int argc, char const *argv[])
+{
+    reader("./test.bin");
+    return 0;
+}
+```
+
+writer.c
+
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#define FILE_LENGTH 0x100
+
+/* Renvoie un nombre aléatoire compris dans l’intervalle [ low , high ].*/
+int random_range(unsigned const low, unsigned const high) {
+    unsigned const range = high - low + 1;
+    return low + (int) (((double) range) * rand() / (RAND_MAX + 1.0));
+}
+
+int writer(char *file) {
+
+    int fd;
+    int * file_memory;
+    int tab[5];
+    const size_t n = sizeof tab / sizeof tab[0];
+
+    /* Initialise le générateur de nombres aléatoires */
+    srand(time(NULL));
+
+    /* Prépare un fichier suffisamment long pour contenir le nombre . */
+    fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    lseek(fd, FILE_LENGTH + 1, SEEK_SET);
+    write(fd, " ", 1);
+    lseek(fd, 0, SEEK_SET);
+    /* Met en correspondance le fichier et la mémoire . */
+    file_memory = mmap(0, FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    /* Ecrit un entier aléatoire dans la zone mise en correspondance . */
+
+    for (int i = 0; i < 5; i++)
+    {
+        file_memory[i] = random_range(-100, 100);
+    }
+    
+
+    //sprintf((char *) file_memory, " %d %d %d %d %d \n ", random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100));
+    /* Libère la mémoire ( facultatif car le programme se termine ) . */
+    munmap(file_memory, FILE_LENGTH);
+    return EXIT_SUCCESS;
+}
+
+int main(int argc, char const *argv[])
+{
+    writer("./test.bin");
+    return 0;
+}
+```
 -   [3E] Que se passe-t-il si le fichier de « mapping » se trouve sur un partage réseau NTFS ou SMB ? Quelles perspectives entrevoyez vous dans l’usage d’une mémoire mappé par rapport a une mémoire partagée ?
 
 ## 4- Tubes (aka « pipes »)
@@ -289,7 +389,7 @@ ls | less
 
 Pour créer un tube, appelez la fonction pipe (man 3 pipe devrait vous être utile). L’appel à pipe stocke le descripteur de fichier en lecture à l’indice zéro et le descripteur de fichier en écriture à l’indice un.
 
-```C
+```C++
 int pipe_fds [2];
 pipe ( pipe_fds ) ;
 ```
@@ -305,7 +405,7 @@ Le processus fils devra lire toutes les valeurs qui lui sont transmises, calcule
 
 Le processus parent doit se terminer lorsque le processus fils a fini sa tache.
 
-```C
+```C++
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -373,8 +473,8 @@ int main()
 }
 ```
 
--   [4B] Quelle est le rôle/intérêt de la commande dup2 ? ``
--   [4C] A quoi servent les commandes popen et pclose ?
+-   [4B] Quelle est le rôle/intérêt de la commande dup2 ? ` La fonction dup2 crée une copie du descripteur de fichier donné et lui attribue un nouvel entier. La fonction dup2 prend un ancien descripteur de fichier à cloner comme premier paramètre et le second paramètre est l’entier pour un nouveau descripteur de fichier. Par conséquent, ces deux descripteurs de fichier pointent vers le même fichier et peuvent être utilisés de manière interchangeable.`
+-   [4C] A quoi servent les commandes popen et pclose ? `La fonction popen() engendre un processus en créant un pipe, exécutant  un  fork(), et  en  invoquant  le  shell. La fonction pclose() attend que le processus associé se termine et retourne le statut de sortie de la commande comme retourné par wait4().`
 
 ## 5- Tubes nommés (FIFO, aka « named pipe »)
 
@@ -403,7 +503,7 @@ aléatoires dans un tube nommé. Ce programme prendra en argument le nom du tube
 
 Exemple de syntaxe : send_rand mypipe -n 30 qui enverra 30 valeurs aléatoires dans le tube nommé « mypipe »
 
-```C
+```C++
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -480,7 +580,7 @@ int main(int argc, char const *argv[])
 ```
 
 -   [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube, et affichera la moyenne des valeurs avant de quitter.
-```C
+```C++
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
