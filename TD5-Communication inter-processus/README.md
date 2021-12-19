@@ -9,7 +9,13 @@ Ce TD aborde les différentes approches permettant a deux processus de communiqu
 des données.
 
 ***METRAL Emile ICS3***
-
+- [TD5 – Communication inter-processus](#td5--communication-inter-processus)
+  - [1. Signaux](#1-signaux)
+  - [2- Mémoire partagée](#2--mémoire-partagée)
+  - [3- Mémoire mappée](#3--mémoire-mappée)
+  - [4- Tubes (aka « pipes »)](#4--tubes-aka--pipes-)
+  - [5- Tubes nommés (FIFO, aka « named pipe »)](#5--tubes-nommés-fifo-aka--named-pipe-)
+  - [6- Socket](#6--socket)
 ## 1. Signaux
 
 Les signaux sont des mécanismes permettant de manipuler et de communiquer avec des processus sous Linux. Le sujet des signaux est vaste ; nous traiterons ici quelques uns des signaux et techniques utilisés pour contrôler les processus.
