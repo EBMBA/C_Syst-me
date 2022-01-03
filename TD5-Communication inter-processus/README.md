@@ -8,6 +8,14 @@
 Ce TD aborde les différentes approches permettant a deux processus de communiquer et d’échanger
 des données.
 
+***METRAL Emile ICS3***
+- [TD5 – Communication inter-processus](#td5--communication-inter-processus)
+  - [1. Signaux](#1-signaux)
+  - [2- Mémoire partagée](#2--mémoire-partagée)
+  - [3- Mémoire mappée](#3--mémoire-mappée)
+  - [4- Tubes (aka « pipes »)](#4--tubes-aka--pipes-)
+  - [5- Tubes nommés (FIFO, aka « named pipe »)](#5--tubes-nommés-fifo-aka--named-pipe-)
+  - [6- Socket](#6--socket)
 ## 1. Signaux
 
 Les signaux sont des mécanismes permettant de manipuler et de communiquer avec des processus sous Linux. Le sujet des signaux est vaste ; nous traiterons ici quelques uns des signaux et techniques utilisés pour contrôler les processus.
@@ -44,7 +52,7 @@ Une fois les 30 secondes écoule, le processus parent doit envoyer un signal SIG
 processus enfants (Attention aux processus Zombie)
 
 
-```C
+```C++
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,16 +104,17 @@ int main(int argc, char *argv[])
     }
     for (int n = 0; n < 30; n++)
     {
-        int num = rand() % 4;
+        int num = rand() % 5;
         kill(pid[num], SIGUSR1);
         sleep(1);
     }
-    for (int p = 0; p < 4; p++)
+    for (int p = 0; p < 5; p++)
     {
         kill(pid[p], SIGINT);
     }
     
 }
+
 ```
 
 -   [1B] Il existe une fonction signal qui permet de faire presque la même chose que
@@ -160,6 +169,98 @@ les données lues.
 Après l’envoi de 5 valeurs aléatoires au processus fils, le processus parent mettra fin au
 processus fils, et se terminera.
 
+```C++
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/random.h>
+#include <signal.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <time.h>
+
+struct sigaction action;
+int randomNumber;
+int segment_id;
+char *shared_memory;
+
+void handler(int signum)
+{
+
+    printf("-----------------------FILS-------------------- \n");
+    /* Réattache le segment de mémoire partagée à une adresse différente . */
+    shared_memory = (char *)shmat(segment_id, (void *)0x5000000, 0);
+    printf("FILS:  mémoire partagée réattachée à l ’ adresse % p \n ", shared_memory);
+    /* Affiche la chaîne de la mémoire partagée . */
+    printf(" % s pid: %d\n ", shared_memory, getpid());
+    /* Détache le segment de mémoire partagée . */
+    shmdt(shared_memory);
+}
+
+int processChild()
+{
+    // Attends le signal
+    while (1)
+    {
+        sleep(1);
+    }
+}
+
+int main()
+{
+    struct shmid_ds shmbuffer;
+    int segment_size;
+    const int shared_segment_size = 0x400;
+    /* Alloue le segment de mémoire partagée . */
+    segment_id = shmget(IPC_PRIVATE, shared_segment_size,
+                        IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+    /* Attache le segment de mémoire partagée . */
+    shared_memory = (char *)shmat(segment_id, 0, 0);
+    printf("----------------------PARENTS------------------------\n");
+    printf(" PARENTS: mémoire partagée attachée à l ’ adresse % p \n ", shared_memory);
+    /* Détermine la taille du segment . */
+    shmctl(segment_id, IPC_STAT, &shmbuffer);
+    segment_size = shmbuffer.shm_segsz;
+    printf(" taille du segment : % d \n ", segment_size);
+
+    // Fais le lien entre l'action et le signal 
+    action.sa_handler = handler;
+    sigaction(SIGUSR1, &action, NULL);
+
+    // Création du fils 
+    pid_t pid = fork();
+
+    if (pid == 0) // Action à faire dans le fils
+    {
+        processChild();
+    }
+
+    // Initialisation du temps à 0 pour les valeurs aléatoires
+    srand(time(0));
+
+    // Boucle de création et écriture des n nombres aléatoires
+    for (int i = 0; i < 5; i++)
+    {
+        printf("----------------------PARENTS------------------------\n");
+        /* Réattache le segment de mémoire partagée à une adresse différente . */
+        shared_memory = (char *)shmat(segment_id, (void *)0x5000000, 0);
+        // Génération du nombre aléatoire
+        randomNumber = random() % 100 + 1;
+        /* Écrit une chaîne dans le segment de mémoire partagée . */
+        sprintf(shared_memory, "%d", randomNumber);
+        /* Détache le segment de mémoire partagée . */
+        shmdt(shared_memory);
+        //envoie du signale au fils
+        kill(getpid(), SIGUSR1);
+    }
+
+    // Libère la mémoire 
+    shmctl(segment_id, IPC_RMID, 0);
+    // Arrête le processus du fils
+    kill(pid, SIGINT);
+
+    return (0);
+}
+```
 ## 3- Mémoire mappée
 
 La mémoire mappée permet à différents processus de communiquer via un fichier partagé.
@@ -169,7 +270,7 @@ Bien que vous puissiez concevoir l’utilisation de mémoire mappée comme étan
 Vous pouvez vous représenter la mémoire mappée comme l’allocation d’un tampon contenant la totalité d’un fichier, la lecture du fichier dans le tampon, puis (si le tampon est modifié) l’écriture de celui-ci dans le fichier. Linux gère les opérations de lecture et d’écriture à votre place.
 
 -   [3A] Pour mettre en correspondance un fichier ordinaire avec la mémoire d’un processus, utilisez l’appel mmap. Cette fonction accepte 6 paramètres. Donnez le rôle de chacun des paramètres avec les valeurs possibles.
-```
+```C++
 void * mmap (void *address, size_t length, int protect, int flags, int filedes, off_t offset)
 
     Adresse de départ en mémoire virtuelle.
@@ -183,6 +284,103 @@ void * mmap (void *address, size_t length, int protect, int flags, int filedes, 
 -   [3C] A quoi sert le drapeau MAP_SHARED ? `Ce drapeau est utilisé pour partager le mappage avec tous les autres processus, qui sont mappés à cet objet.`
 -   [3D] Utilisez les fichiers TD5-reader.c et TD5-writer.c pour écrire deux programmes. Le premier programme écrira sous forme binaire le contenu d’un tableau d’entiers de 5 valeurs aléatoires dans la mémoire mappée. Le second programme devra lire ces valeurs depuis la mémoire mappée, et les afficher. `Voir Programmes/Ex3/writer.c et reader.c`
 
+reader.c
+
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#define FILE_LENGTH 0x100
+
+int reader(char *file) {
+    int fd;
+    int * file_memory;
+
+    /* Ouvre le fichier */
+    fd = open(file, O_RDWR, S_IRUSR | S_IWUSR);
+    /* Met en correspondance le fichier et la mémoire */
+    file_memory = mmap(0, FILE_LENGTH, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    /* Lit l’entier , l’affiche  */
+    for (int i = 0; i < 5; i++)
+    {
+        printf(" valeur : %d \n ", file_memory[i]);
+    }
+    
+    
+    //sprintf((char *) file_memory, " %d \n ", integer);
+    /* Libère la mémoire ( facultatif car le programme se termine ) . */
+    munmap(file_memory, FILE_LENGTH);
+    return 0;
+}
+
+int main(int argc, char const *argv[])
+{
+    reader("./test.bin");
+    return 0;
+}
+```
+
+writer.c
+
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#define FILE_LENGTH 0x100
+
+/* Renvoie un nombre aléatoire compris dans l’intervalle [ low , high ].*/
+int random_range(unsigned const low, unsigned const high) {
+    unsigned const range = high - low + 1;
+    return low + (int) (((double) range) * rand() / (RAND_MAX + 1.0));
+}
+
+int writer(char *file) {
+
+    int fd;
+    int * file_memory;
+    int tab[5];
+    const size_t n = sizeof tab / sizeof tab[0];
+
+    /* Initialise le générateur de nombres aléatoires */
+    srand(time(NULL));
+
+    /* Prépare un fichier suffisamment long pour contenir le nombre . */
+    fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    lseek(fd, FILE_LENGTH + 1, SEEK_SET);
+    write(fd, " ", 1);
+    lseek(fd, 0, SEEK_SET);
+    /* Met en correspondance le fichier et la mémoire . */
+    file_memory = mmap(0, FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    /* Ecrit un entier aléatoire dans la zone mise en correspondance . */
+
+    for (int i = 0; i < 5; i++)
+    {
+        file_memory[i] = random_range(-100, 100);
+    }
+    
+
+    //sprintf((char *) file_memory, " %d %d %d %d %d \n ", random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100),random_range(-100, 100));
+    /* Libère la mémoire ( facultatif car le programme se termine ) . */
+    munmap(file_memory, FILE_LENGTH);
+    return EXIT_SUCCESS;
+}
+
+int main(int argc, char const *argv[])
+{
+    writer("./test.bin");
+    return 0;
+}
+```
 -   [3E] Que se passe-t-il si le fichier de « mapping » se trouve sur un partage réseau NTFS ou SMB ? Quelles perspectives entrevoyez vous dans l’usage d’une mémoire mappé par rapport a une mémoire partagée ?
 
 ## 4- Tubes (aka « pipes »)
@@ -197,7 +395,7 @@ ls | less
 
 Pour créer un tube, appelez la fonction pipe (man 3 pipe devrait vous être utile). L’appel à pipe stocke le descripteur de fichier en lecture à l’indice zéro et le descripteur de fichier en écriture à l’indice un.
 
-```C
+```C++
 int pipe_fds [2];
 pipe ( pipe_fds ) ;
 ```
@@ -213,7 +411,7 @@ Le processus fils devra lire toutes les valeurs qui lui sont transmises, calcule
 
 Le processus parent doit se terminer lorsque le processus fils a fini sa tache.
 
-```C
+```C++
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -281,8 +479,8 @@ int main()
 }
 ```
 
--   [4B] Quelle est le rôle/intérêt de la commande dup2 ? ``
--   [4C] A quoi servent les commandes popen et pclose ?
+-   [4B] Quelle est le rôle/intérêt de la commande dup2 ? ` La fonction dup2 crée une copie du descripteur de fichier donné et lui attribue un nouvel entier. La fonction dup2 prend un ancien descripteur de fichier à cloner comme premier paramètre et le second paramètre est l’entier pour un nouveau descripteur de fichier. Par conséquent, ces deux descripteurs de fichier pointent vers le même fichier et peuvent être utilisés de manière interchangeable.`
+-   [4C] A quoi servent les commandes popen et pclose ? `La fonction popen() engendre un processus en créant un pipe, exécutant  un  fork(), et  en  invoquant  le  shell. La fonction pclose() attend que le processus associé se termine et retourne le statut de sortie de la commande comme retourné par wait4().`
 
 ## 5- Tubes nommés (FIFO, aka « named pipe »)
 
@@ -311,7 +509,7 @@ aléatoires dans un tube nommé. Ce programme prendra en argument le nom du tube
 
 Exemple de syntaxe : send_rand mypipe -n 30 qui enverra 30 valeurs aléatoires dans le tube nommé « mypipe »
 
-```C
+```C++
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -388,7 +586,7 @@ int main(int argc, char const *argv[])
 ```
 
 -   [5B] Le second programme appelé get_rand lira toutes les valeurs présentes dans le tube, et affichera la moyenne des valeurs avant de quitter.
-```C
+```C++
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -457,33 +655,348 @@ int main(int argc, char const *argv[])
 
 ## 6- Socket
 
-Un socket est un dispositif de communication bidirectionnel pouvant être utilisé pour
-communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets locaux, que vous avez entrevu dans le TD sur MySQL. Pour les sockets réseaux (PF_INET), vous êtes invité a retourner voir le code concernant les projets du module DEV-INF-2.
+Un socket est un dispositif de communication bidirectionnel pouvant être utilisé pour communiquer avec un autre processus sur la même machine ou avec un processus s’exécutant sur d’autres machines. Nous n’aborderons ici que les sockets UNIX (PF_UNIX) , aussi appelés sockets locaux, que vous avez entrevu dans le TD sur MySQL. Pour les sockets réseaux (PF_INET), vous êtes invité a retourner voir le code concernant les projets du module DEV-INF-2.
 
 Les sockets mettant en relation des processus situés sur le même ordinateur peuvent utiliser l’espace de nommage local représenté par les constantes PF_LOCAL et PF_UNIX. 
 
 Ils sont appelés sockets locaux ou sockets de domaine UNIX. Leur adresse de socket, un nom de fichier, n’est utilisée que lors de la création de connexions.
 
-Le nom du socket est spécifié dans une struct sockaddr_un . Vous devez positionner le
-champ sun_family à AF_LOCAL, qui représente un espace de nommage local. Le champ sun_path
-spécifie le nom de fichier à utiliser et peut faire au plus 108 octets de long. La longueur réelle de la struct sockaddr_un doit être calculée en utilisant la macro SUN_LEN .
+Le nom du socket est spécifié dans une struct sockaddr_un . Vous devez positionner le champ sun_family à AF_LOCAL, qui représente un espace de nommage local. Le champ sun_path spécifie le nom de fichier à utiliser et peut faire au plus 108 octets de long. La longueur réelle de la struct sockaddr_un doit être calculée en utilisant la macro SUN_LEN .
 
-Tout nom de fichier peut être utilisé, mais le processus doit avoir des autorisations
-d’écriture sur le répertoire qui permettent l’ajout de fichiers. Pour se connecter à un socket, un processus doit avoir des droits en lecture sur le fichier. Même si différents ordinateurs peuvent partager le même système de fichier, seuls des processus s’exécutant sur le même ordinateur peuvent communiquer via les sockets de l’espace de nommage local.
+Tout nom de fichier peut être utilisé, mais le processus doit avoir des autorisations d’écriture sur le répertoire qui permettent l’ajout de fichiers. Pour se connecter à un socket, un processus doit avoir des droits en lecture sur le fichier. Même si différents ordinateurs peuvent partager le même système de fichier, seuls des processus s’exécutant sur le même ordinateur peuvent communiquer via les sockets de l’espace de nommage local.
 
 Le seul protocole permis pour l’espace de nommage local est 0.
 
 Comme il est stocké dans un système de fichiers, un socket local est affiché comme un
 fichier. Avec le type s (srwxrwx—x).
 
-- [6A] En utilisant les sockets UNIX, vous devez écrire un programme client qui enverra
-une valeur numérique unique a un programme serveur via les sockets UNIX. Ce programme sera exécuté simultanément 2 fois. Les 2 processus contacteront le même serveur et chacun devra envoyer une valeur a un processus serveur via les sockets.
+Fichier commun pour les 2 programmes suivants :
+```C++
+/**
+ * @file conf.h
+ * @author Emile METRAL
+ * @brief define & include for client.c and server.c
+ * @version 0.1
+ * @date 2021-12-18
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+#if !defined(CONF_H)
+#define CONF_H
 
-- [6B] Le processus serveur attendra d’avoir deux valeurs numériques. Il devra alors
-calculer la somme des deux valeurs, l’afficher et aussi la retourner aux processus clients, qui a leurs tours, afficheront cette somme.
+#define SOCKET_NAME "/tmp/test6.socket"
+#define RESULT_FILE "./tmpfile.bin"
+#define CLIENT1_FILE "./tmpclient1.bin"
+#define BUFFER_SIZE 12
+#define FILE_LENGTH 0x100
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <errno.h>
+
+#endif // CONF_H
+```
+
+- [6A] En utilisant les sockets UNIX, vous devez écrire un programme client qui enverra une valeur numérique unique a un programme serveur via les sockets UNIX. Ce programme sera exécuté simultanément 2 fois. Les 2 processus contacteront le même serveur et chacun devra envoyer une valeur a un processus serveur via les sockets.
+```C++
+/**
+ * @file client.c
+ * @author METRAL EMILE 
+ * @brief Client send number and receive a result 
+ * @version 0.1
+ * @date 2021-12-18
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+#include "conf.h"
 
 
-Pour approfondir d’autres approches ;
-    http://jean-luc.massat.perso.luminy.univ-amu.fr/ens/docs/IPC.html
-    https://www.geeksforgeeks.org/ipc-using-message-queues/
-    https://upsilon.cc/~zack/teaching/1415/progsyst/cours-10-sysv-ipc.pdf
+int main(int argc, char *argv[])
+{
+    struct sockaddr_un addr;
+    int ret;
+    int data_socket;
+    char buffer[BUFFER_SIZE];
+
+    /* Create local socket. */
+
+    data_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+    if (data_socket == -1)
+    {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * For portability clear the whole structure, since some
+     * implementations have additional (nonstandard) fields in
+     * the structure.
+     */
+
+    memset(&addr, 0, sizeof(addr));
+
+    /* Connect socket to socket address. */
+
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, SOCKET_NAME, sizeof(addr.sun_path) - 1);
+
+    ret = connect(data_socket, (const struct sockaddr *)&addr,
+                  sizeof(addr));
+    if (ret == -1)
+    {
+        fprintf(stderr, "The server is down.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Send argument. */
+
+    ret = write(data_socket, argv[1], strlen(argv[1]) + 1);
+    if (ret == -1)
+    {
+        perror("write");
+        return EXIT_FAILURE;
+    }
+
+    /* Receive result. */
+
+    ret = read(data_socket, buffer, sizeof(buffer));
+
+    printf("Result = %s\n", buffer);
+
+    /* Close socket. */
+    close(data_socket);
+
+    exit(EXIT_SUCCESS);
+}
+```
+
+- [6B] Le processus serveur attendra d’avoir deux valeurs numériques. Il devra alors calculer la somme des deux valeurs, l’afficher et aussi la retourner aux processus clients, qui a leurs tours, afficheront cette somme.
+```C++
+/**
+ * @file serveur.c
+ * @author METRAL EMILE 
+ * @brief Server receive from 2 clients numbers and sum them before send the result to the 2 clients
+ * @version 0.1
+ * @date 2021-12-18
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+#include "conf.h"
+
+void childrenProcess();
+int writer(char *file, int value);
+int reader(char *file);
+void handler(int signum);
+
+int result;
+int client1_socket;
+struct sigaction action;
+
+
+
+int main(int argc, char *argv[])
+{
+    struct sockaddr_un name;
+    int down_flag = 0;
+    int ret;
+    int connection_socket;
+    int data_socket;
+    char buffer[BUFFER_SIZE];
+    int nbrConnections = -1;
+    pid_t pid;
+
+    // Fais le lien entre l'action et le signal
+    action.sa_handler = handler;
+    sigaction(SIGUSR1, &action, NULL);
+
+    /* Create local socket. */
+
+    connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+    if (connection_socket == -1)
+    {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * For portability clear the whole structure, since some
+     * implementations have additional (nonstandard) fields in
+     * the structure.
+     */
+
+    memset(&name, 0, sizeof(name));
+
+    /* Bind socket to socket name. */
+
+    name.sun_family = AF_UNIX;
+    strncpy(name.sun_path, SOCKET_NAME, sizeof(name.sun_path) - 1);
+
+    ret = bind(connection_socket, (const struct sockaddr *)&name,
+               sizeof(name));
+    if (ret == -1)
+    {
+        perror("bind");
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * Prepare for accepting connections. The backlog size is set
+     * to 20. So while one request is being processed other requests
+     * can be waiting.
+     */
+
+    ret = listen(connection_socket, 2);
+    if (ret == -1)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    /* This is the main loop for handling connections. */
+    while (1)
+    {
+        /* Wait for incoming connection. */
+        client1_socket = accept(connection_socket, NULL, NULL);
+
+        result = 0;
+
+        pid = fork();
+
+        if (pid < 0)
+        {
+            perror("No fork");
+            exit(EXIT_FAILURE);
+        }
+
+        else if (pid == 0)
+        {
+
+            /* Wait for next data packet. */
+            ret = read(client1_socket, buffer, sizeof(buffer));
+
+            /* Add received summand. */
+            result += atoi(buffer);
+            printf("Child %d calculating results %d\n", (int) getpid(), result);
+            writer(CLIENT1_FILE, result);
+        }
+
+        else
+        {
+            // Close first client connection for the main process
+            close(client1_socket);
+
+            // Wait for second client connection
+            data_socket = accept(connection_socket, NULL, NULL);
+
+            /* Wait for next data packet. */
+            ret = read(data_socket, buffer, sizeof(buffer));
+
+            /* Add received summand. */
+            result += atoi(buffer);
+            result += reader(CLIENT1_FILE);
+            writer(RESULT_FILE, result);
+
+            // Sending signal to child process
+            kill(pid, SIGUSR1);
+            sleep(1);
+
+            /* Send result. */
+            sprintf(buffer, "%d", result);
+            ret = write(data_socket, buffer, sizeof(buffer));
+
+            /* Close socket. */
+            close(data_socket);
+
+            break;
+        }
+    }
+
+    // Arrête le processus du fils
+    printf("Parent of child %d killing him\n", pid);
+    kill(pid, SIGINT);
+
+    close(connection_socket);
+
+    /* Unlink the socket. */
+
+    unlink(SOCKET_NAME);
+
+    exit(EXIT_SUCCESS);
+}
+
+int writer(char *file, int value)
+{
+
+    int fd;
+    int *file_memory;
+    int tab[5];
+    const size_t n = sizeof tab / sizeof tab[0];
+
+    /* Prépare un fichier suffisamment long pour contenir le nombre . */
+    fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    lseek(fd, FILE_LENGTH + 1, SEEK_SET);
+    write(fd, " ", 1);
+    lseek(fd, 0, SEEK_SET);
+    /* Met en correspondance le fichier et la mémoire . */
+    file_memory = mmap(0, FILE_LENGTH, PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    /* Ecrit la valeur dans la zone mise en correspondance . */
+    file_memory[0] = value;
+
+    /* Libère la mémoire ( facultatif car le programme se termine ) . */
+    munmap(file_memory, FILE_LENGTH);
+    return EXIT_SUCCESS;
+}
+
+int reader(char *file)
+{
+    int fd;
+    int *file_memory;
+    int value;
+
+    /* Ouvre le fichier */
+    fd = open(file, O_RDWR, S_IRUSR | S_IWUSR);
+    /* Met en co rr es pon da nce le fichier et la mémoire */
+    file_memory = mmap(0, FILE_LENGTH, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    /* Lit l’entier , l’affiche  */
+
+    value = file_memory[0];
+
+    // sprintf((char *) file_memory, " %d \n ", integer);
+    /* Libère la mémoire ( facultatif car le programme se termine ) . */
+    munmap(file_memory, FILE_LENGTH);
+    return value;
+}
+
+void handler(int signum)
+{
+    char buffer[BUFFER_SIZE];
+    result = reader(RESULT_FILE);
+
+    /* Send result. */
+    sprintf(buffer, "%d", result);
+    write(client1_socket, buffer, sizeof(buffer));
+
+    /* Close socket. */
+    close(client1_socket);
+}
+```
+
+
+References :
+-   https://stackoverflow.com/questions/13669474/multiclient-server-using-fork
+-   http://www.bruno-garcia.net/www/Unix/
+-   https://www.geeksforgeeks.org/introduction-of-process-synchronization/?ref=lbp
+

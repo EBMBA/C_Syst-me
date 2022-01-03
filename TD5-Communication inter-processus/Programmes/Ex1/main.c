@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         kill(pid[num], SIGUSR1);
         sleep(1);
     }
-    for (int p = 0; p < 4; p++)
+    for (int p = 0; p < 5; p++)
     {
         kill(pid[p], SIGINT);
     }
