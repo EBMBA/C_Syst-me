@@ -331,13 +331,55 @@ Enfin, un appel a la fonction `fflush` permet, comme dans le cas de fsync, de «
 int fflush(FILE *stream);
 ```
 -   [7C] En utilisant les fonctions précédentes, écrire un programme qui sauvegarde la valeur 19496893802562113L dans un fichier binaire. Ouvrez le fichier. Qu'observez-vous ?
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile7C.bin";
+    FILE *pFile;
+    pFile = fopen(file, "w");
+    long int ByteArray = 19496893802562113L;
+    if (pFile != NULL)
+    {
+        fwrite(&ByteArray, sizeof(ByteArray), 1, pFile);
+
+        fclose(pFile);
+    }
+    return 0;
+}
+```
+J'observe un message "ABSURDE".
+emile@emile-virtual-machine:~/Documents/C_Syst-me/TD6/Exercice7$ cat BinaryFile7C.bin 
+> ABSURDE
 -   [7D] De même, créez un programme qui enregistre la valeur 0x4142434451525354L dans un fichier, en utilisant les fonctions précédentes. Affichez la valeur avec un printf en décimal et hexadécimal ? Que contient le fichier binaire ?
 -   [7E] Enregistrez la valeur précédente dans un fichier en utilisant la fonction fprintf. Que constatez-vous ?
 -   [7F] Quelle est la différence essentielle entre un fichier binaire et un fichier texte ?
 -   [7G] Que pouvez-vous dire du principe 'little endian' et 'big endian' ?
--   [7H] A quelle groupe appartiennent les processeurs de la famille des Intel/AMD ?
--   [7I] Donnez un modèle de processeur appartenant  a l'autre groupe.
+```
+Little Endian: Dans ce schéma, l’octet d’ordre inférieur est stocké sur l’adresse de départ (A) et l’octet d’ordre supérieur est stocké sur l’adresse suivante (A + 1).
+
+Big Endian : Dans ce schéma, l’octet d’ordre supérieur est stocké sur l’adresse de départ (A) et l’octet d’ordre inférieur est stocké sur l’adresse suivante (A + 1).
+
+adresse big-endian 	petit endian
+0x0000 	0x12 	    0xcd
+0x0001 	0x34 	    0xab
+0x0002 	0xab 	    0x34
+0x0003 	0xcd 	    0x12
+```
+-   [7H] A quelle groupe appartiennent les processeurs de la famille des Intel/AMD ? ` Les processeurs Intel ont toujours été little-endian. `
+-   [7I] Donnez un modèle de processeur appartenant  a l'autre groupe. `ARM CORTEX M4 `
 -   [7J] Il existe d'autres fonctions permettant de lire et d’écrire dans un fichier,  qui sont respectivement `fread` et `fwrite`. Quelles sont les différences entre `read` et `fread` ou `write` et `fwrite` ? 
+```
+Les fonctions fopen sont des fonctions standard de la bibliothèque C, et les fonctions Open sont définies par POSIX et sont des appels système dans les systèmes UNIX.
+C’est-à-dire que la fonction fopen est plus portable, alors que la fonction Open ne peut être utilisée que dans les systèmes d’exploitation POSIX.
+
+Lorsque qu'on utilise les fonctions fopen, on doit définir un objet qui se réfère à un fichier. Il est appelé "file handler" et est une struct; la fonction Open utilise un entier int appelé "descripteur de fichier.
+
+Les fonctions fopen sont de haut niveau I / O, et des buffers sont utilisés pour la lecture et l’écriture. Les fonctions open sont de niveau relativement basse, plus proche du système d’exploitation, et il n’y a pas de buffer pour la lecture et l’écriture. Parce qu'elles peuvent traiter avec plus de systèmes d’exploitation, les fonctions open peuvent accéder et modifier certaines informations qui ne peuvent pas être accessibles par les fonctions fopen, comme la visualisation des permissions de lecture et d’écriture des fichiers. Ces caractéristiques supplémentaires sont généralement propres au système.
+
+```
 
 Les fonctions de « stdio » n’opèrent pas sur des descripteurs de fichiers, qui sont une notion spécifique à Unix, mais sur des pointeurs sur une structure qui représente un flot, la structure FILE .
 
@@ -355,10 +397,8 @@ int buf_end;
 } FILE;
 ```
 
--   [7K] Quelles informations importantes pouvez vous tirer du code précédent ?
--   [7L] En utilisant `fwrite`, écrire un programme qui enregistre 100 valeurs  (de 0 a 100) de 
-type `int` en binaire dans un fichier et les affiche simultanément. Que pouvez vous observer dans le 
-fichier ?
+-   [7K] Quelles informations importantes pouvez vous tirer du code précédent ? ` On peut notifier la presence d'un file descriptor, d'un buffer avec deux entier pour definir le debut et la fin du buffer et enfin aue le flags est stocke dans las structure du pointeur du fichier.`
+-   [7L] En utilisant `fwrite`, écrire un programme qui enregistre 100 valeurs  (de 0 a 100) de type `int` en binaire dans un fichier et les affiche simultanément. Que pouvez vous observer dans le fichier ?
 -   [7M] Écrire un second programme qui lit les valeurs précédentes du fichier et les affiche ?
 
 ## 8- Fichiers séquentiels et fichiers a accès direct
@@ -436,3 +476,4 @@ typedef struct {
 
 Sources :
 - http://www.makelinux.net/alp/046.htm
+- https://topic.alibabacloud.com/a/difference-between-fopenopen-readwrite-and-freadfont-colorredfwritefont_8_8_31848651.html
