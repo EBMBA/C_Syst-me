@@ -476,4 +476,5 @@ typedef struct {
 
 Sources :
 - http://www.makelinux.net/alp/046.htm
+- https://www.programiz.com/c-programming/c-file-input-output
 - https://topic.alibabacloud.com/a/difference-between-fopenopen-readwrite-and-freadfont-colorredfwritefont_8_8_31848651.html
