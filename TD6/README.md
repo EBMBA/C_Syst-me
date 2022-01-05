@@ -180,8 +180,8 @@ Le second un OU binaire entre R_OK, W_OK et X_OK, qui correspondent aux permissi
 
 L’appel système `fcntl` est le point d’accès de plusieurs opérations avancées sur les descripteurs de fichiers. Le premier argument de `fcntl` est un descripteur de fichiers ouvert et le second est une valeur indiquant quelle opération doit être effectuée. Pour certaines d’entre elles, `fcntl` prend un argument supplémentaire. Nous verrons ici l’une des opérations les plus utiles de `fcntl` : le verrouillage de fichier. Consultez la page de manuel de `fcntl` pour plus d’informations sur les autres opérations.
 
-- [4A] Pourquoi peut-on avoir besoin de verrouiller un fichier en écriture ?
-- [4B] Écrire un programme qui écrit des valeurs aléatoires dans un fichier. Ce programme devra placer un verrou en écriture (F_WRLCK) sur le fichier. Que ce passe-t-il si vous exécutez deux fois le même programme depuis 2 shells différents. ?
+- [4A] Pourquoi peut-on avoir besoin de verrouiller un fichier en écriture ? `Afin de signaler que le verrou a déjà été donné à un autre processus pour que aucun autre processus puisse écrire ou pour permettre de communiquer avec un autre processus qui aurait au préalable eut le verrou de lecture.`
+- [4B] Écrire un programme qui écrit des valeurs aléatoires dans un fichier. Ce programme devra placer un verrou en écriture (F_WRLCK) sur le fichier. Que ce passe-t-il si vous exécutez deux fois le même programme depuis 2 shells différents. ? `Le deuxième processus reste bloqué à l'étape d'ouverture du fichier car il n'a pas le verrou. `
 
 ## 5- Buffers (Mémoire tampon)
 
@@ -226,53 +226,123 @@ déclaration est la suivante (voir man 2 `stat` ) :
 En parallèle, les fonctions `opendir` et `readdir` permettent respectivement d'ouvrir un répertoire et de lire le contenu du répertoire ouvert.
 
 - [6A] En utilisant les fonctions précédentes, créez un programme qui affiche la taille cumulée de tous les fichiers contenus dans un répertoire.
+```C++
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <dirent.h>
+#include <string.h>
+
+int getSizeDirectory(char path[100], struct stat stats );
+int getFileSize(struct stat stats);
+
+int main()
+{
+    char path[100];
+    struct stat stats;
+
+    printf("Enter source file path: ");
+    scanf("%s", path);
+
+
+    // stat() returns 0 on successful operation,
+    // otherwise returns -1 if unable to get file properties.
+    if (stat(path, &stats) == 0)
+    {
+        printf("Size of the repertory : %d\n", getSizeDirectory(path, stats));
+    }
+    else
+    {
+        printf("Unable to get file properties.\n");
+        printf("Please check whether '%s' file exists.\n", path);
+    }
+
+    return 0;
+}
+
+int getSizeDirectory(char path[100], struct stat stats ){
+    int size = 0; 
+    DIR *dp;
+    struct dirent *dirp;
+    char pathFile[200];
+
+    printf("path : %s\n", path);
+    dp = opendir(path);
+
+    while ((dirp = readdir(dp)) != NULL){
+        strcpy(pathFile, path);
+        strcat(pathFile, "/");
+        strcat(pathFile, dirp->d_name);
+        stat(pathFile, &stats);
+        size += getFileSize(stats); 
+        //printf("size: %d name: %s\n", size, pathFile );
+    } 
+
+    closedir(dp);
+
+    return size;
+}
+
+int getFileSize(struct stat stats)
+{
+    // File size
+    int size =  512 * stats.st_blocks;
+    //printf("%d\n", size );
+    return  size; // size of an block * numbers of block 
+}
+```
 
 ## 7 Descripteurs de fichiers et fichiers binaires 
 
 Un descripteur de fichier est un entier qui identifie un fichier dans un programme C. Ne pas confondre un descripteur de fichier avec un pointeur de fichier. Les fonctions `fdopen`, `fopen`, `freopen` permettent d’obtenir un pointeur de fichier à partir d’un descripteur. Les fonctions `fread` et `fwrite` utilisent un pointeur de fichier.
 
-La fonction `open` permet d’obtenir un descripteur de fichier à partir du nom de fichier sur le disque, de la même façon que `fopen` permet d’obtenir un pointeur de fichier. Une grande différence est que la fonction `open` offre beaucoup plus d’options pour tester les permissions. Le prototype de la fonction open est le suivant :
+La fonction `open` permet d’obtenir un descripteur de fichier à partir du nom de fichier sur le disque, de la même façon que `fopen` permet d’obtenir un pointeur de fichier. Une grande différence est que la fonction `open` offre beaucoup plus d’options pour tester les permissions. Le prototype de la fonction `open` est le suivant :
 ```C++
 int open(const char *pathname, int flags, mode_t mode);
 ```
 
 La fonction retourne une valeur strictement négative en cas d’erreur.
 
-- [7A] Quelles sont les différentes valeurs (avec leurs symboles) possibles pour le paramètre
-flags ?
+- [7A] Quelles sont les différentes valeurs (avec leurs symboles) possibles pour le paramètre flags ?
+```C++
+O_RDONLY, O_WRONLY, O_RDWR, O_TRUNC O_APPEND O_CREAT O_EXCL  
+```
 - [7B] Que permet de faire le paramètre mode ?
 
-Le rôle de la fonction read est de lire au plus « count » octets de données depuis le fichier 
-spécifié par le descripteur de fichiers fd et de les stocker à l’adresse buf .
-L’appel read retourne le nombre d’octets effectivement lus, 0 à la fin du fichier, ou -1 en cas
-d’erreur.
+Le rôle de la fonction read est de lire au plus « count » octets de données depuis le fichier spécifié par le descripteur de fichiers fd et de les stocker à l’adresse buf.
+
+L’appel `read` retourne le nombre d’octets effectivement lus, 0 à la fin du fichier, ou -1 en cas d’erreur.
+
+```C++
 ssize_t read(int fd, void *buf, size_t count);
-Le rôle de la fonction write est d’écrire au plus « count » octets de données qui se trouvent à
-l’adresse « buf » dans le fichier spécifié par le descripteur de fichiers fd .
+```
+
+Le rôle de la fonction write est d’écrire au plus « count » octets de données qui se trouvent à l’adresse « buf » dans le fichier spécifié par le descripteur de fichiers fd.
+
 L’appel write retourne le nombre d’octets effectivement écrits, ou -1 en cas d’erreur.
+```C++
 ssize_t write(int fd, void *buf, size_t count);
-Page 6/9
-Enfin, un appel a la fonction fflush permet, comme dans le cas de fsync, de « flusher les 
-buffers» 
+```
+
+Enfin, un appel a la fonction `fflush` permet, comme dans le cas de fsync, de « flusher les buffers» 
+```C++
 int fflush(FILE *stream);
-● [7C] En utilisant les fonctions précédentes, écrire un programme qui sauvegarde la valeur 
-19496893802562113L dans un fichier binaire. Ouvrez le fichier. Qu'observez-vous ?
-● [7D] De même, créez un programme qui enregistre la valeur 0x4142434451525354L dans
-un fichier, en utilisant les fonctions précédentes. Affichez la valeur avec un printf en décimal et 
-hexadécimal ? Que contient le fichier binaire ?
-● [7E] Enregistrez la valeur précédente dans un fichier en utilisant la fonction fprintf. Que 
-constatez-vous ?
-● [7F] Quelle est la différence essentielle entre un fichier binaire et un fichier texte ?
-● [7G] Que pouvez-vous dire du principe 'little endian' et 'big endian' ?
-● [7H] A quelle groupe appartiennent les processeurs de la famille des Intel/AMD ?
-● [7I] Donnez un modèle de processeur appartenant  a l'autre groupe.
-● [7J] Il existe d'autres fonctions permettant de lire et d’écrire dans un fichier,  qui sont 
-respectivement fread et fwrite. Quelles sont les différences entre read et fread ou write et 
-fwrite ? 
-Les fonctions de « stdio » n’opèrent pas sur des descripteurs de fichiers, qui sont une notion 
-spécifique à Unix, mais sur des pointeurs sur une structure qui représente un flot, la structure FILE .
-La définition de FILE dépend du système ; sur un système POSIX elle pourrait par exemple 
-être définie comme suit :
+```
+-   [7C] En utilisant les fonctions précédentes, écrire un programme qui sauvegarde la valeur 19496893802562113L dans un fichier binaire. Ouvrez le fichier. Qu'observez-vous ?
+-   [7D] De même, créez un programme qui enregistre la valeur 0x4142434451525354L dans un fichier, en utilisant les fonctions précédentes. Affichez la valeur avec un printf en décimal et hexadécimal ? Que contient le fichier binaire ?
+-   [7E] Enregistrez la valeur précédente dans un fichier en utilisant la fonction fprintf. Que constatez-vous ?
+-   [7F] Quelle est la différence essentielle entre un fichier binaire et un fichier texte ?
+-   [7G] Que pouvez-vous dire du principe 'little endian' et 'big endian' ?
+-   [7H] A quelle groupe appartiennent les processeurs de la famille des Intel/AMD ?
+-   [7I] Donnez un modèle de processeur appartenant  a l'autre groupe.
+-   [7J] Il existe d'autres fonctions permettant de lire et d’écrire dans un fichier,  qui sont respectivement `fread` et `fwrite`. Quelles sont les différences entre `read` et `fread` ou `write` et `fwrite` ? 
+
+Les fonctions de « stdio » n’opèrent pas sur des descripteurs de fichiers, qui sont une notion spécifique à Unix, mais sur des pointeurs sur une structure qui représente un flot, la structure FILE .
+
+La définition de FILE dépend du système ; sur un système POSIX elle pourrait par exemple être définie comme suit :
+```C++
 #define BUFSIZ 4096
 #define FILE_ERR 1
 #define FILE_EOF 2
@@ -283,75 +353,86 @@ char *buffer
 int buf_ptr;
 int buf_end;
 } FILE;
-● [7K] Quelles informations importantes pouvez vous tirer du code précédent ?
-● [7L] En utilisant fwrite, écrire un programme qui enregistre 100 valeurs  (de 0 a 100) de 
-type int en binaire dans un fichier et les affiche simultanément. Que pouvez vous observer dans le 
+```
+
+-   [7K] Quelles informations importantes pouvez vous tirer du code précédent ?
+-   [7L] En utilisant `fwrite`, écrire un programme qui enregistre 100 valeurs  (de 0 a 100) de 
+type `int` en binaire dans un fichier et les affiche simultanément. Que pouvez vous observer dans le 
 fichier ?
-● [7M] Écrire un second programme qui lit les valeurs précédentes du fichier et les affiche ?
-Page 7/9
-8- Fichiers séquentiels et fichiers a accès direct
+-   [7M] Écrire un second programme qui lit les valeurs précédentes du fichier et les affiche ?
+
+## 8- Fichiers séquentiels et fichiers a accès direct
+
 Jusqu’à maintenant, vous avez lu les données d’un fichier les une après les autres. 
-Autrement dit vous avez lu de façon séquentielle les données présentes dans le fichier. Les lectures 
-et les écritures dans un fichier sont par défaut séquentielles : les données sont lues ou écrites les 
-unes à la suite de l’autre. Par exemple, lors de l’exécution de la séquence de code
+
+Autrement dit vous avez lu de façon séquentielle les données présentes dans le fichier. Les lectures et les écritures dans un fichier sont par défaut séquentielles : les données sont lues ou écrites les unes à la suite de l’autre. Par exemple, lors de l’exécution de la séquence de code 
+```C++
 rc = write(fd, "a", 1);
 rc = write(fd, "b", 1);
+```
 l’octet « b » est écrit après l’octet « a ».
-La position dans un fichier à laquelle se fait la prochaine lecture ou écriture est stockée dans 
-le noyau dans un champ de l’entrée de fichier ouvert qui s’appelle le pointeur de position courante. 
-Lors de l’appel système open , le pointeur de position courante est initialisé à 0, soit le début du 
-fichier.
-Le pointeur de position courante associé à un descripteur de fichier peut être lu et modifié à 
-l’aide de l’appel système lseek :
+
+La position dans un fichier à laquelle se fait la prochaine lecture ou écriture est stockée dans le noyau dans un champ de l’entrée de fichier ouvert qui s’appelle le pointeur de position courante. 
+
+Lors de l’appel système open , le pointeur de position courante est initialisé à 0, soit le début du fichier.
+Le pointeur de position courante associé à un descripteur de fichier peut être lu et modifié à l’aide de l’appel système `lseek` :
+```C++
 off_t lseek(int fd, off_t offset, int whence);
-Le paramètre « fd » est le descripteur de fichier dont l’entrée de la table de fichiers ouverts 
-associée doit être modifiée. Le paramètre « offset » (« déplacement ») identifie la nouvelle position,
-et le paramètre « whence » (« à partir d’où ») spécifie l’interprétation de ce dernier. Il peut avoir les 
-valeurs suivantes :
-– SEEK_SET : offset spécifie un décalage à partir du début du fichier ;
-– SEEK_CUR : offset spécifie un décalage à partir de la position courante ;
-– SEEK_END : offset spécifie un décalage à partir de la fin du fichier.
-L’appel lseek retourne la nouvelle valeur du pointeur de position courante, ou -1 en cas 
-d’erreur (et alors errno est positionné).
-Par exemples, pour déplacer le pointeur de fichier au début d’un fichier, on peut faire
-lrc = lseek(fd, 0L, SEEK_SET);
-Notez que dans ce dernier cas, il existe aussi la fonction rewind qui ramène le curseur de lecture au 
-début du fichier : 
+```
+
+Le paramètre « fd » est le descripteur de fichier dont l’entrée de la table de fichiers ouverts associée doit être modifiée. Le paramètre « offset » (« déplacement ») identifie la nouvelle position, et le paramètre « whence » (« à partir d’où ») spécifie l’interprétation de ce dernier. Il peut avoir les valeurs suivantes :
+- SEEK_SET : offset spécifie un décalage à partir du début du fichier ;
+- SEEK_CUR : offset spécifie un décalage à partir de la position courante ;
+- SEEK_END : offset spécifie un décalage à partir de la fin du fichier.
+
+L’appel `lseek` retourne la nouvelle valeur du pointeur de position courante, ou -1 en cas d’erreur (et alors errno est positionné).
+Par exemples, pour déplacer le pointeur de fichier au début d’un fichier, on peut faire lrc = lseek(fd, 0L, SEEK_SET);
+Notez que dans ce dernier cas, il existe aussi la fonction rewind qui ramène le curseur de lecture au début du fichier : 
+```C++
 void rewind(FILE* fd);
-Pour déplacer le pointeur de fichier à la fin d’un fichier, on peut faire
-size = lseek(fd, 0L, SEEK_END);
+```
+
+Pour déplacer le pointeur de fichier à la fin d’un fichier, on peut faire size = lseek(fd, 0L, SEEK_END);
+
 NB : si l’appel réussit, la variable « size » contient la taille du fichier dans ce dernier cas.
-Page 8/9
+
 Enfin, la fonction ftell donne la position courante du curseur de lecture : 
+```C++
 long ftell(FILE* fd);
-● [8A] Écrivez un programme qui enregistre les valeurs de 10 a 30 dans un fichier binaire.
-● [8B] Votre programme doit ensuite relire les données stockées a raison d’une valeur sur 
-trois (vous devez utiliser lseek)
-● [8C] Maintenant votre programme doit, en plus, lire la 5ieme valeur enregistrée dans le 
-fichier.
-9-Sauvegarde d'une structure
+```
+-   [8A] Écrivez un programme qui enregistre les valeurs de 10 a 30 dans un fichier binaire.
+-   [8B] Votre programme doit ensuite relire les données stockées a raison d’une valeur sur trois (vous devez utiliser lseek)
+-   [8C] Maintenant votre programme doit, en plus, lire la 5ieme valeur enregistrée dans le fichier.
+
+# 9-Sauvegarde d'une structure
+
 L’enregistrement d’une structure dans un fichier doit être l’objet d’une attention particulière.
+
 Prenez la structure suivante : 
+```C++
 typedef struct {
     char nom[20]; 
     int age;
     float taille;
 } Personne;
-● [9A] Créez un tableau de 4 « Personne »
-● [9B] Affichez les données stockées dans les structures (nom, age et poids de chaque 
+```
+-   [9A] Créez un tableau de 4 « Personne »
+-   [9B] Affichez les données stockées dans les structures (nom, age et poids de chaque 
 « Personne »)
-● [9C] Créez une fonction qui sauvegarde le contenu du tableau dans un fichier binaire.
-● [9D] Créez une fonction qui lit les données du fichier précédent et les affiche au fur et a 
+-   [9C] Créez une fonction qui sauvegarde le contenu du tableau dans un fichier binaire.
+-   [9D] Créez une fonction qui lit les données du fichier précédent et les affiche au fur et a 
 mesure de la lecture. Vous devez bien sur retrouver les données qui étaient stockées dans les 
 structures.
-● [9E] Créez une fonction qui lit les données du fichier précédents et les stocke dans un 
+-   [9E] Créez une fonction qui lit les données du fichier précédents et les stocke dans un 
 tableau de « Personne »
-● [9F] Même exercice que précédemment, mais cette fois avec la structure suivante : 
+-   [9F] Même exercice que précédemment, mais cette fois avec la structure suivante : 
+```C++
 typedef struct {
     char *nom; 
     int age;
     float taille;
 } Personne;
+```
 
 Sources :
 - http://www.makelinux.net/alp/046.htm
