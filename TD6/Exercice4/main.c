@@ -1,7 +1,7 @@
-#include <fcntl.h> 
-#include <stdio.h> 
-#include <string.h> 
-#include <unistd.h> 
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 /**
  * @brief Return a random integer between MIN and MAX, inclusive.  Obtain randomness from /dev/random.
@@ -13,9 +13,9 @@
 int random_number()
 {
 
-    /*  Store a file descriptor opened to /dev/random in a static 
+    /*  Store a file descriptor opened to /dev/random in a static
         variable.  That way, we don't need to open the file every time
-        this function is called.  
+        this function is called.
     */
 
     static int dev_random_fd = -1;
@@ -34,7 +34,8 @@ int random_number()
 
         dev_random_fd = open("/dev/random", O_RDONLY);
 
-        if(dev_random_fd == -1){
+        if (dev_random_fd == -1)
+        {
             return -1;
         }
     }
@@ -62,53 +63,49 @@ int random_number()
 
     } while (bytes_to_read > 0);
 
-
     return random_value;
 }
 
-
-int main (int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-  char* file = "/tmp/filelockExemple"; 
-  int fd; 
-  struct flock lock; 
-  char *writing_number;
+    char *file = "/tmp/filelockExemple";
+    int fd;
+    struct flock lock;
 
-  printf ("opening %s\n", file); 
+    printf("opening %s\n", file);
 
-  /* Open a file descriptor to the file.  */ 
-  fd = open (file, O_WRONLY); 
-  printf ("locking\n"); 
+    /* Open a file descriptor to the file.  */
+    fd = open(file, O_WRONLY);
+    printf("locking\n");
 
-  /* Initialize the flock structure.  */ 
-  memset (&lock, 0, sizeof(lock)); 
-  lock.l_type = F_WRLCK; 
+    /* Initialize the flock structure.  */
+    memset(&lock, 0, sizeof(lock));
+    lock.l_type = F_WRLCK;
 
-  /* Place a write lock on the file.  */ 
-  fcntl (fd, F_SETLKW, &lock); 
-  printf ("locked; hit Enter to unlock... "); 
+    /* Place a write lock on the file.  */
+    fcntl(fd, F_SETLKW, &lock);
+    printf("locked; hit Enter to unlock... ");
 
-  /* Write random numbers. */
-  while (1) /* Wait for the user to hit Enter. */ 
-  {
-        int random_n = random_number();
-        writing_number = random_n + '0';
-        write(fd, writing_number, sizeof(writing_number));
-        if (getchar())
-        {
-            break;
-        }
-        
-  }
+    /* Write random numbers. */
+     /* Wait for the user to hit Enter. */
+   
+    int random_n = random_number();
+    char writing_number2[100];
 
-  printf ("unlocking\n"); 
+    sprintf(writing_number2, "%d", random_n);
+    printf("%s", writing_number2);
 
-  /* Release the lock. */ 
-  lock.l_type = F_UNLCK; 
-  fcntl (fd, F_SETLKW, &lock); 
+    // writing in the file 
+    write(fd, writing_number2, sizeof(writing_number2));
+    getchar() ;
 
-  close (fd); 
+    printf("unlocking\n");
 
-  return 0; 
+    /* Release the lock. */
+    lock.l_type = F_UNLCK;
+    fcntl(fd, F_SETLKW, &lock);
 
-} 
+    close(fd);
+
+    return 0;
+}
