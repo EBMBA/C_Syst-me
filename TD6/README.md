@@ -309,7 +309,7 @@ La fonction retourne une valeur strictement négative en cas d’erreur.
 ```C++
 O_RDONLY, O_WRONLY, O_RDWR, O_TRUNC O_APPEND O_CREAT O_EXCL  
 ```
-- [7B] Que permet de faire le paramètre mode ?
+- [7B] Que permet de faire le paramètre mode ? `Il permet de determiner les permissions.`
 
 Le rôle de la fonction read est de lire au plus « count » octets de données depuis le fichier spécifié par le descripteur de fichiers fd et de les stocker à l’adresse buf.
 
@@ -350,12 +350,65 @@ int main(int argc, char const *argv[])
     return 0;
 }
 ```
-J'observe un message "ABSURDE".
+`J'observe un message "ABSURDE".`
+```bash 
 emile@emile-virtual-machine:~/Documents/C_Syst-me/TD6/Exercice7$ cat BinaryFile7C.bin 
 > ABSURDE
+```
 -   [7D] De même, créez un programme qui enregistre la valeur 0x4142434451525354L dans un fichier, en utilisant les fonctions précédentes. Affichez la valeur avec un printf en décimal et hexadécimal ? Que contient le fichier binaire ?
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile7D.bin";
+    FILE *pFile;
+    pFile = fopen(file, "w");
+    long int ByteArray = 0x4142434451525354L;
+    printf("Hexadecimal : %lx \n Decimal : %ld \n",ByteArray,ByteArray);
+    if (pFile != NULL)
+    {
+        fwrite(&ByteArray, sizeof(ByteArray), 1, pFile);
+
+        fclose(pFile);
+    }
+    return 0;
+}
+```
+` Le fichier binaire contient : TSRQDCBA et avec le printf il est affiche : Hexadecimal : 4142434451525354 Decimal : 4702394921629406036 `
 -   [7E] Enregistrez la valeur précédente dans un fichier en utilisant la fonction fprintf. Que constatez-vous ?
--   [7F] Quelle est la différence essentielle entre un fichier binaire et un fichier texte ?
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile7E.bin";
+    FILE *pFile;
+    pFile = fopen(file, "w");
+    long int ByteArray = 0x4142434451525354L;
+    printf("Hexadecimal : %lx \n Decimal : %ld \n",ByteArray,ByteArray);
+    if (pFile != NULL)
+    {
+        fprintf(pFile, "%lo", ByteArray);
+
+        fclose(pFile);
+    }
+    return 0;
+}
+```
+```bash 
+$ cat BinaryFile7E.bin 
+405022064212124451524
+```
+`On constate que  le contenu est un chiffre different que le chiffre en decimal ou en hexadecimal.`
+-   [7F] Quelle est la différence essentielle entre un fichier binaire et un fichier texte ? 
+```
+Les fichiers binaires contiennent généralement une séquence d’octets, ou des regroupements ordonnés de huit bits.Les formats de fichiers binaires peuvent inclure plusieurs types de données dans le même fichier, tels que l’image, la vidéo et les données audio. Ces données peuvent être interprétées en supportant les programmes, mais apparaîtront comme du texte brouillé dans un éditeur de texte.
+
+Les fichiers texte sont plus restrictifs que les fichiers binaires puisqu’ils ne peuvent contenir que des données textuelles. Cependant, contrairement aux fichiers binaires, ils sont moins susceptibles de devenir corrompus. Alors qu’une petite erreur dans un fichier binaire peut le rendre illisible, une petite erreur dans un fichier texte peut simplement apparaître une fois que le fichier a été ouvert. 
+```
 -   [7G] Que pouvez-vous dire du principe 'little endian' et 'big endian' ?
 ```
 Little Endian: Dans ce schéma, l’octet d’ordre inférieur est stocké sur l’adresse de départ (A) et l’octet d’ordre supérieur est stocké sur l’adresse suivante (A + 1).
@@ -372,6 +425,9 @@ adresse big-endian 	petit endian
 -   [7I] Donnez un modèle de processeur appartenant  a l'autre groupe. `ARM CORTEX M4 `
 -   [7J] Il existe d'autres fonctions permettant de lire et d’écrire dans un fichier,  qui sont respectivement `fread` et `fwrite`. Quelles sont les différences entre `read` et `fread` ou `write` et `fwrite` ? 
 ```
+Fonctions fopen : fread, fwrite;
+Fonctions open : read, write;
+
 Les fonctions fopen sont des fonctions standard de la bibliothèque C, et les fonctions Open sont définies par POSIX et sont des appels système dans les systèmes UNIX.
 C’est-à-dire que la fonction fopen est plus portable, alors que la fonction Open ne peut être utilisée que dans les systèmes d’exploitation POSIX.
 
@@ -399,8 +455,64 @@ int buf_end;
 
 -   [7K] Quelles informations importantes pouvez vous tirer du code précédent ? ` On peut notifier la presence d'un file descriptor, d'un buffer avec deux entier pour definir le debut et la fin du buffer et enfin aue le flags est stocke dans las structure du pointeur du fichier.`
 -   [7L] En utilisant `fwrite`, écrire un programme qui enregistre 100 valeurs  (de 0 a 100) de type `int` en binaire dans un fichier et les affiche simultanément. Que pouvez vous observer dans le fichier ?
--   [7M] Écrire un second programme qui lit les valeurs précédentes du fichier et les affiche ?
+```C
+#include <stdlib.h>
+#include <stdio.h>
 
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile7L.bin";
+    FILE *pFile;
+    pFile = fopen(file, "wb+");
+
+    if (pFile != NULL)
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            fwrite(&i, sizeof(i), 1, pFile);            
+            printf("%d", i);
+        }
+        fclose(pFile);
+    }
+    return 0;
+}
+```
+```bash
+cat BinaryFile7L.bin 
+
+
+
+123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abc
+```
+`On remarque que le contenu du fichier est les elements de la table ASCII de 0 a 100`
+-   [7M] Écrire un second programme qui lit les valeurs précédentes du fichier et les affiche ?
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile7L.bin";
+    FILE *pFile;
+    pFile = fopen(file, "rb");
+    int read =  0; 
+
+    fseek(pFile, 0, SEEK_SET);
+
+    if (pFile != NULL)
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            fread(&read, sizeof(int), 1, pFile);            
+            printf("%d ", read);
+            fseek(pFile, +1/2*sizeof(int), SEEK_CUR);
+        }
+        printf("\n");
+        fclose(pFile);
+    }
+    return 0;
+}
+```
 ## 8- Fichiers séquentiels et fichiers a accès direct
 
 Jusqu’à maintenant, vous avez lu les données d’un fichier les une après les autres. 
@@ -441,8 +553,91 @@ Enfin, la fonction ftell donne la position courante du curseur de lecture :
 long ftell(FILE* fd);
 ```
 -   [8A] Écrivez un programme qui enregistre les valeurs de 10 a 30 dans un fichier binaire.
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile8A.bin";
+    FILE *pFile;
+    pFile = fopen(file, "wb");
+
+    if (pFile != NULL)
+    {
+        for (int i = 10; i <= 30; i++)
+        {
+            fwrite(&i, sizeof(i), 1, pFile);            
+            printf("%d", i);
+        }
+        fclose(pFile);
+    }
+    return 0;
+}
+```
 -   [8B] Votre programme doit ensuite relire les données stockées a raison d’une valeur sur trois (vous devez utiliser lseek)
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/file.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile8A.bin";
+    int pFile;
+    pFile = open(file, O_RDONLY);
+    int readVar = 0;
+
+    lseek(pFile, 0, SEEK_SET);
+
+    if (pFile != 0)
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            read(pFile, &readVar, sizeof(int));            
+            printf("%d ", readVar);
+            lseek(pFile, +2*sizeof(int), SEEK_CUR);
+        }
+        printf("\n");
+        close(pFile);
+    }
+    return 0;
+}
+```
 -   [8C] Maintenant votre programme doit, en plus, lire la 5ieme valeur enregistrée dans le fichier.
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/file.h>
+
+int main(int argc, char const *argv[])
+{
+    char *file = "BinaryFile8A.bin";
+    int pFile;
+    pFile = open(file, O_RDONLY);
+    int readVar = 0;
+
+    lseek(pFile, 0, SEEK_SET);
+
+    if (pFile != 0)
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            read(pFile, &readVar, sizeof(int));            
+            printf("%d ", readVar);
+            lseek(pFile, +2*sizeof(int), SEEK_CUR);
+        }
+
+        lseek(pFile, +5*sizeof(int), SEEK_SET);
+        read(pFile, &readVar, sizeof(int));
+        printf("5eme valeur : %d ", readVar);
+        
+        printf("\n");
+        close(pFile);
+    }
+    return 0;
+}
+```
 
 # 9-Sauvegarde d'une structure
 
@@ -457,9 +652,38 @@ typedef struct {
 } Personne;
 ```
 -   [9A] Créez un tableau de 4 « Personne »
+```C++
+    Personne tab[4];
+    
+    
+    strcpy(tab[0].nom, "eleve1");
+    tab[0].age = 15;
+    tab[0].taille = 1.98;
+
+    strcpy(tab[1].nom, "eleve2");
+    tab[1].age = 16;
+    tab[1].taille = 1.58;
+
+    strcpy(tab[2].nom, "eleve3");
+    tab[2].age = 15;
+    tab[2].taille = 1.65;
+
+    strcpy(tab[3].nom, "eleve4");
+    tab[3].age =14;
+    tab[3].taille = 1.69;
+```
 -   [9B] Affichez les données stockées dans les structures (nom, age et poids de chaque 
 « Personne »)
+```C++
+    for (int i = 0; i < 4; i++)
+    {
+        printf("nom : %s, age: %d,taille : %.2f\n", tab[i].nom, tab[i].age, tab[i].taille);
+    }
+```
 -   [9C] Créez une fonction qui sauvegarde le contenu du tableau dans un fichier binaire.
+```C++
+
+```
 -   [9D] Créez une fonction qui lit les données du fichier précédent et les affiche au fur et a 
 mesure de la lecture. Vous devez bien sur retrouver les données qui étaient stockées dans les 
 structures.
