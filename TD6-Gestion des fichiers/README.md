@@ -7,6 +7,17 @@
 
 Ce TD aborde les différentes approches permettant de stocker des données dans un fichier ainsi que quelques notions concernant la gestion des périphériques et certains fichiers spéciaux. 
 
+- [TD6 – Gestion des fichiers](#td6--gestion-des-fichiers)
+  - [1. Les périphériques](#1-les-périphériques)
+  - [2 Le système de fichiers /proc](#2-le-système-de-fichiers-proc)
+  - [3- Test des permissions d’accès a un fichier](#3--test-des-permissions-daccès-a-un-fichier)
+  - [4- Verrous et opérations sur les fichiers](#4--verrous-et-opérations-sur-les-fichiers)
+  - [5- Buffers (Mémoire tampon)](#5--buffers-mémoire-tampon)
+  - [6 Parcours d'un répertoire](#6-parcours-dun-répertoire)
+  - [7 Descripteurs de fichiers et fichiers binaires](#7-descripteurs-de-fichiers-et-fichiers-binaires)
+  - [8- Fichiers séquentiels et fichiers a accès direct](#8--fichiers-séquentiels-et-fichiers-a-accès-direct)
+  - [9-Sauvegarde d'une structure](#9-sauvegarde-dune-structure)
+
 ## 1. Les périphériques
 
 Les techniques présentées dans cette partie fournissent un accès direct aux pilotes de périphériques s’exécutant au sein du noyau Linux, et à travers eux aux dispositifs matériels connectés au système. Une mauvaise manipulation peut altérer ou endommager le système GNU/Linux.
@@ -638,7 +649,7 @@ int main(int argc, char const *argv[])
 }
 ```
 
-# 9-Sauvegarde d'une structure
+## 9-Sauvegarde d'une structure
 
 L’enregistrement d’une structure dans un fichier doit être l’objet d’une attention particulière.
 
