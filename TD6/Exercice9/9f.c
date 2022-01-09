@@ -28,10 +28,10 @@ void saveInFile(Personne *personnes)
 
 void readInFile()
 {
-    char *file = "BinaryFile9C.bin";
+    char *file = "BinaryFile9F.bin";
     FILE *pFile;
     pFile = fopen(file, "rb");
-    Personne *readVar = malloc(4*sizeof(Personne));
+    Personne *readVar;
 
     if (pFile != 0)
     {
@@ -48,20 +48,20 @@ void readInFile()
 int main(int argc, char const *argv[])
 {
     Personne tab[4];
-    
-    strcpy(tab[0].nom, "eleve1");
+
+    tab[0].nom = "eleve1";
     tab[0].age = 15;
     tab[0].taille = 1.98;
 
-    strcpy(tab[1].nom, "eleve2");
+    tab[1].nom="eleve2";
     tab[1].age = 16;
     tab[1].taille = 1.58;
 
-    strcpy(tab[2].nom, "eleve3");
+    tab[2].nom="eleve3";
     tab[2].age = 15;
     tab[2].taille = 1.65;
 
-    strcpy(tab[3].nom, "eleve4");
+    tab[3].nom="eleve4";
     tab[3].age = 14;
     tab[3].taille = 1.69;
 
@@ -69,8 +69,8 @@ int main(int argc, char const *argv[])
     {
         printf("nom : %s, age: %d,taille : %.2f\n", tab[i].nom, tab[i].age, tab[i].taille);
     }
-
-   saveInFile(tab);
+ 
+    saveInFile(tab);
     readInFile();
 
     return 0;

@@ -1,10 +1,9 @@
 
 ***CPE Lyon - 3ICS - Année 2021/22***
 ***Administration des systèmes Linux***
-# TD6 – Programmation C Système
+# TD6 – Gestion des fichiers
 
 ***Emile METRAL***
-***3 : Gestion des fichiers***
 
 Ce TD aborde les différentes approches permettant de stocker des données dans un fichier ainsi que quelques notions concernant la gestion des périphériques et certains fichiers spéciaux. 
 
@@ -682,13 +681,49 @@ typedef struct {
 ```
 -   [9C] Créez une fonction qui sauvegarde le contenu du tableau dans un fichier binaire.
 ```C++
+void saveInFile(Personne *personnes)
+{
+    char *file = "BinaryFile9C.bin";
+    FILE *pFile;
+    pFile = fopen(file, "wb");
 
+    if (pFile != NULL)
+    {
+        fwrite(&personnes, sizeof(personnes), 1, pFile);
+
+        printf("\n");
+
+        fclose(pFile);
+    }
+}
 ```
 -   [9D] Créez une fonction qui lit les données du fichier précédent et les affiche au fur et a 
 mesure de la lecture. Vous devez bien sur retrouver les données qui étaient stockées dans les 
 structures.
+
 -   [9E] Créez une fonction qui lit les données du fichier précédents et les stocke dans un 
 tableau de « Personne »
+```C++
+Marche aussi pour la 9D
+void readInFile()
+{
+    char *file = "BinaryFile9C.bin";
+    FILE *pFile;
+    pFile = fopen(file, "rb");
+    Personne *readVar = malloc(4*sizeof(Personne));
+
+    if (pFile != 0)
+    {
+        fread(&readVar, sizeof(readVar), 1, pFile);
+        for (int i = 0; i < 4; i++)
+        {
+            printf("nom : %s, age: %d,taille : %.2f\n", readVar[i].nom, readVar[i].age, readVar[i].taille);
+        }
+        fclose(pFile);
+    }
+    
+}
+```
 -   [9F] Même exercice que précédemment, mais cette fois avec la structure suivante : 
 ```C++
 typedef struct {
@@ -696,6 +731,88 @@ typedef struct {
     int age;
     float taille;
 } Personne;
+```
+
+CODE :
+
+```C++
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/file.h>
+
+typedef struct
+{
+    char *nom;
+    int age;
+    float taille;
+} Personne;
+
+void saveInFile(Personne *personnes)
+{
+    char *file = "BinaryFile9C.bin";
+    FILE *pFile;
+    pFile = fopen(file, "wb");
+
+    if (pFile != NULL)
+    {
+        fwrite(&personnes, sizeof(personnes), 1, pFile);
+
+        printf("\n");
+
+        fclose(pFile);
+    }
+}
+
+void readInFile()
+{
+    char *file = "BinaryFile9F.bin";
+    FILE *pFile;
+    pFile = fopen(file, "rb");
+    Personne *readVar;
+
+    if (pFile != 0)
+    {
+        fread(&readVar, sizeof(readVar), 1, pFile);
+        for (int i = 0; i < 4; i++)
+        {
+            printf("nom : %s, age: %d,taille : %.2f\n", readVar[i].nom, readVar[i].age, readVar[i].taille);
+        }
+        fclose(pFile);
+    }
+    
+}
+
+int main(int argc, char const *argv[])
+{
+    Personne tab[4];
+
+    tab[0].nom = "eleve1";
+    tab[0].age = 15;
+    tab[0].taille = 1.98;
+
+    tab[1].nom="eleve2";
+    tab[1].age = 16;
+    tab[1].taille = 1.58;
+
+    tab[2].nom="eleve3";
+    tab[2].age = 15;
+    tab[2].taille = 1.65;
+
+    tab[3].nom="eleve4";
+    tab[3].age = 14;
+    tab[3].taille = 1.69;
+
+    for (int i = 0; i < 4; i++)
+    {
+        printf("nom : %s, age: %d,taille : %.2f\n", tab[i].nom, tab[i].age, tab[i].taille);
+    }
+ 
+    saveInFile(tab);
+    readInFile();
+
+    return 0;
+}
 ```
 
 Sources :
