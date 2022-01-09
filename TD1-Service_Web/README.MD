@@ -14,6 +14,22 @@ L’objectif de ce TD est : <br>
 
 ***Vous devrez répondre a toutes les questions et rendre un document numérique avec vos réponses. Les modalités de rendu vous seront communiquées par l’enseignant qui vous encadre.***
 
+- [TD1 – Service Web](#td1--service-web)
+  - [1- Les VM Centos 8 sont déployées dans la ferme. Vous trouverez un fichier vous donnant les VM ainsi que les plages d’IP qui vous sont attribuées.](#1--les-vm-centos-8-sont-déployées-dans-la-ferme-vous-trouverez-un-fichier-vous-donnant-les-vm-ainsi-que-les-plages-dip-qui-vous-sont-attribuées)
+  - [2-Désactivation de SELinux](#2-désactivation-de-selinux)
+  - [4-Installation du service Apache (La configuration réseau avancé viendra par la suite)](#4-installation-du-service-apache-la-configuration-réseau-avancé-viendra-par-la-suite)
+  - [5-Configuration du service Apache](#5-configuration-du-service-apache)
+  - [6-Exploration de la configuration de base (fichier httpd.conf)](#6-exploration-de-la-configuration-de-base-fichier-httpdconf)
+  - [7-Tests et Installations complémentaires](#7-tests-et-installations-complémentaires)
+  - [8- Configuration avancée <br>](#8--configuration-avancée-)
+  - [9-Configuration réseau : <br>](#9-configuration-réseau--)
+  - [10-IP Virtuelles <br>](#10-ip-virtuelles-)
+  - [12- Serveur virtuel par nom <br>](#12--serveur-virtuel-par-nom-)
+  - [13- Serveur virtuel, HTTPS et SSL <br>](#13--serveur-virtuel-https-et-ssl-)
+  - [14-Restriction de l’accès utilisateur <br>](#14-restriction-de-laccès-utilisateur-)
+  - [15-Fichier .htaccess](#15-fichier-htaccess)
+  - [16-Personnalisation de pages d'erreurs](#16-personnalisation-de-pages-derreurs)
+
 ## 1- Les VM Centos 8 sont déployées dans la ferme. Vous trouverez un fichier vous donnant les VM ainsi que les plages d’IP qui vous sont attribuées.
 - La VM est une CentOS MINIMAL ( SANS Interface Graphique ) avec :
   -  Une seule carte réseau.

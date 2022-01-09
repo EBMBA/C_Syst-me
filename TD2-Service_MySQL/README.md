@@ -10,6 +10,19 @@ L’objectif de ce TD est :
 -   De gérer les accès aux différentes bases de données
 -   D’analyser l’intérêt d’un serveur esclave et de le mettre en place.
 
+- [TD2 – Service MySQL/MariaDB](#td2--service-mysqlmariadb)
+  - [1- Récupérez et déployez la VM (CentOS 8 Minimal) , ou installer une CentOS 7 ou 8 a partir de l’ISO](#1--récupérez-et-déployez-la-vm-centos-8-minimal--ou-installer-une-centos-7-ou-8-a-partir-de-liso)
+  - [2- Désactivation  du pare-feu.](#2--désactivation--du-pare-feu)
+  - [3- Installation](#3--installation)
+  - [4-Prise en main](#4-prise-en-main)
+  - [5- Démarrez le service mariadb.](#5--démarrez-le-service-mariadb)
+  - [6- Connexion au service](#6--connexion-au-service)
+  - [7-Sécurisation](#7-sécurisation)
+  - [8- Création d’une DB via un script SQL.](#8--création-dune-db-via-un-script-sql)
+  - [9-Gestion des comptes et accès](#9-gestion-des-comptes-et-accès)
+  - [10 Sauvegarde et restauration](#10-sauvegarde-et-restauration)
+  - [11- Outils graphiques.](#11--outils-graphiques)
+  - [12- Réplication comme solution de sauvegarde ?](#12--réplication-comme-solution-de-sauvegarde-)
 ## 1- Récupérez et déployez la VM (CentOS 8 Minimal) , ou installer une CentOS 7 ou 8 a partir de l’ISO
 -   La VM doit être une CentOS MINIMAL ( SANS Interface Graphique ) avec : 
     -   Une seule carte réseau branchée sur le VMNET8
@@ -17,30 +30,30 @@ L’objectif de ce TD est :
     -   CPU avec 2 cores. 
 ## 2- Désactivation  du pare-feu.
 -   Désactivez le firewall et vérifiez qu’il est bien inactif
-# 3- Installation 
+## 3- Installation 
 -   Installez le package mariadb-server `sudo yum install mariadb-server`
 -   [3A] Installez le package mariadb. Que contient ce package ?
 ```bash
 Il contient le client mariadb. 
 ```
 -   [3B] Qu’est ce que mariadb par rapport a mysql ? `MariaDB est un fork de mysql créé après le départ d'un développeur de mysql`
-# 4-Prise en main
+## 4-Prise en main
 -   [4A] Quel est le fichier de configuration de configuration de mariadb ?`/etc/my.cnf`
 -   [4B] Quel est son format ?`.cnf`
 -   [4C] Quel est une de ses particularités ? `Son contenu est en format clé -> valeur.`
 -   [4D] Quel est le répertoire de travail utilisé par le serveur pour stocker les bases de données?`/var/lib/mysql`
 -   [4E] Cette emplacement vous semble-t-il pertinent ? Justifiez votre réponse.` Ce n'est pas pertinent car le répertoire /var est fait pour stocker les données produites par les programmes du systèmes.` 
 -   [4F] Proposez une configuration plus conforme a celle d’un serveur de production.`Il faudrait plutôt  stocker les bases de données dans le repertoire srv car il est fait pour stocker les données des services proposés par le système`
-# 5- Démarrez le service mariadb.
+## 5- Démarrez le service mariadb.
 -   [5A] Sur quel port est a l’écoute le service mariadb par défaut ? Quelle commande avez vous utilisée ? `netstat -tlpn | grep mysql ==> 3306`
 -   [5B] Sur quelle·s IP le service est-il a l’écoute ? `Sur toutes` 
-# 6- Connexion au service
+## 6- Connexion au service
 Sur un système Linux, il existe 2 méthodes pour se connecter au service mariadb, l’une  d’entre elle est l’utilisation du protocole TCP/IP
 -   [6A] Quelle commande vous permet de joindre votre serveur mariadb ?`mysql -u WebUser -h DBSERVER -p`
 -   [6B] Que permet de faire l’option  --protocol ?`Permet définir le protocole que l'on souhaite utiliser entre le client et le serveur.`
 -   [6C] Quelle est l’autre méthode permettant de joindre un service mariadb ? Quelle est sa limite ? `Par un client graphique comme MySQL Workbench `
 -   [6D] Quel est le protocole utilisé par défaut par le client (cf la commande précédente ) pour joindre le service mariadb ? Comment l’avez vous prouvé ?  ` netstat -tlpn | grep mysql ==> tcp`
-# 7-Sécurisation
+## 7-Sécurisation
 Le service mariadb/mysqld possède son propre système de gestion des comptes et des accès.
 -   [7A] Quel est le compte administrateur utilisé par mariadb ?`root sans mot de passe`
 -   [7B] Que ce passe-t-il si vous tentez de vous connecter sur le service mariadb et utilisant l’IP de la VM ? (l’IP , pas l’adresse de bouclage!!) `Nous ne sommes pas autorisé à se connecter` 
@@ -54,7 +67,7 @@ Quelle commande avez vous utilisé pour vous connecter ?
     -   Autorisez les accès distants pour le compte root
     -   Laissez la DB test sur le serveur
     -   Accepter l’application immédiate des changements (Flush des privilèges)
-# 8- Création d’une DB via un script SQL.
+## 8- Création d’une DB via un script SQL.
 Le script SQL WORLDDB-FINAL-UTF8.sql permet de créer des tables  et de les alimenter dans une DB préalablement crée. 
 -   [8A] Créer la DB worlddb. Comment avez vous procédé ?
 ```sql
@@ -148,7 +161,7 @@ SHOW DATABASES;
 | worlddb            |
 +--------------------+
 ```
-# 9-Gestion des comptes et accès
+## 9-Gestion des comptes et accès
 ***L’accès en tant administrateur  n’est plus possible a n’importe qui, ce qui est une bonne  chose, mais maintenant les développeurs et les applications utilisant les DB sont probablement aussi bloqués. En effet, les développeurs ont la mauvaise tendance a utiliser le compte root pour travailler et a paramétrer les applications pour qu’elles utilisent le compte root sans mot de passe...***
 -   [9A] Quelles seraient les conséquences possibles si l’application web, par exemple, présente des failles de sécurité ? `Extraction de la base de donnés / Corruption des données`
 -   [9B] Qu’est ce qu’une injection SQL ? `Le fait d'injecter des requêtes SQL afin d'extraire/ corrompre les données des bases de données du système `
@@ -199,7 +212,7 @@ SHOW tables ;
 -   [9I] Quelle commande SQL permet de révoquer des droits ? ` REVOKE droit ON relation FROM utilisateur `
 -   [9J] A quoi sert le script mysql_setpermission ? `peut aider  d'ajouter des utilisateurs ou des bases de données ou changer le mot de passe d'un utilisateur mais il permet surtout de définir des droits sur les tables de manière intéractif`
 -   [9K] A quoi sert le script mysqlaccess ? `Permet de vérifier les droits d'accès.`
-# 10 Sauvegarde et restauration
+## 10 Sauvegarde et restauration
 ***Les données récoltées et accumulées au sein d’une entreprise est un véritable trésor bien plus précieux que vous ne pourriez l’imaginer. C’est une véritable banque d’informations et de connaissances qui permet à l’entreprise de progresser et grossir petit à petit. Ce serait un véritable drame si des contenus importants venaient à disparaître, à être altérés ou à être visibles par des personnes malveillantes. Si les données étaient perdues, il faudrait pratiquement reprendre à zéro pour retrouver l’essentiel des informations importantes.***
 -   [10A] Quels sont les principaux dangers liés à une mauvaise sécurité ? 
 
@@ -229,7 +242,7 @@ https://mariadb.com/kb/en/library/incremental-backup-and-restore-with-mariabacku
 - [10H] Quel type de sauvegarde est proposé ? `La sauvegarde incrémentale est proposée.`
 - [10I] Quels avantages présent-il ? `La sauvegarde incrémentale est donc plus légère que la sauvegarde complète, plus rapide également en traitement.`
 - [10J] Quels sont les problèmes posés par ce type de sauvegarde ? `Cependant, en cas d'une sauvegarde incrémentale erronnée, les prochaines sauvegardes incrémentales ne pourront être effectuées. Il faudra donc refaire une sauvegarde complète après une incrémentale échouée.`
-# 11- Outils graphiques.
+## 11- Outils graphiques.
 Les outils graphiques apportent un certains confort de travail. Il en existe de très nombreux 
 souvent payant, d’autres gratuits :
 * mySQLWorkbench (risque d’incompatibilité avec mariadb)
@@ -238,7 +251,7 @@ souvent payant, d’autres gratuits :
 Dans la majorité des cas, il est possible de faire une connexion directe sur un serveur mariadb, ou alors de faire une connexion a travers un tunnel SSH
 -   [11A] Quel est l’intérêt d’une connexion a travers un tunnel SSH ? `Les commandes effectuées, les données récupérées via ces commandes également ne peuvent être interceptées car le SSH chiffre les communications.`
  
-# 12- Réplication comme solution de sauvegarde ?
+## 12- Réplication comme solution de sauvegarde ?
 ***La réplication sur un serveur ou plusieurs serveurs esclaves peut être utilisée comme stratégie complémentaire a la sauvegarde. Regardez le lien suivant : https://mariadb.com/kb/en/library/replication-as-a-backup-solution/***
 -   [12A] Quels sont les limites de la réplication ?`La réplication ne peut protéger contre les pertes de données ou une erreur de manipulation.`
 -   [12A] Quels sont les usages courant des serveurs de réplications? `La réplication est notamment utilisée dans les cas de failover ou bien dans un système de load-balancing.`
